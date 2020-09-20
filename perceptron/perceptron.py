@@ -70,11 +70,13 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
             i = i+1
 
-        print(t)
+        # print(t)
+        print("Number of Epochs = ", i)
         return self
 
     def _stopOrNot(self,initialEpochAccuracy,lastEpochAccuracy,numberOfEpochWithNoImprovement):
-
+        # print(initialEpochAccuracy)
+        # print(lastEpochAccuracy)
         if (abs(initialEpochAccuracy - lastEpochAccuracy) < self.stopCriteria) or (initialEpochAccuracy > lastEpochAccuracy):
             numberOfEpochWithNoImprovement.append(abs(initialEpochAccuracy - lastEpochAccuracy))
         else:
@@ -151,8 +153,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
                 correctPredictions.append(correctPredictionsCount)
 
         accuracy_porcetange = correctPredictionsCount/y_reshaped.shape[0]
-        print(target_pred)
-        print(y_reshaped)
+
         # print("The RMSE is ",rmse)
         return accuracy_porcetange
 
@@ -175,4 +176,9 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
+        good_weights = []
+        for weight in self.initial_weights:
+            weight = round(weight,3)
+            good_weights.append(weight)
+        self.initial_weights = good_weights
         return self.initial_weights
