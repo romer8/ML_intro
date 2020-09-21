@@ -13,7 +13,7 @@ from sklearn.linear_model import Perceptron
 
 class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self, lr=.1, shuffle=True, deterministic=10,initial_weights=None,stopCriteria=None):
+    def __init__(self, lr=.1, shuffle=True, deterministic=10,initial_weights=None,stopCriteria=None,misclassification= False,misclassificationArray = []):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -25,6 +25,8 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         self.deterministic = deterministic
         self.initial_weights = initial_weights
         self.stopCriteria = 0.015
+        self.misclassification = misclassification
+        self.misclassificationArray = []
     def fit(self, X, y, initial_weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
 
@@ -49,26 +51,34 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         i = 1
         t = PrettyTable(['Epoch','Weights', 'first RMSE','after RSME','DeltaAccuracy < 0.01','number of Epochs without Improvement' ])
         ##Loop through each Epoch
+        if self.misclassification:
+            self.misclassificationArray.append(1 - self.score(X, y))
 
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
-            X_shuffled,y_shuffled = self._shuffle_data(X,y)
-            initialEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
-            X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+            if i < 1000:
+                X_shuffled,y_shuffled = self._shuffle_data(X,y)
+                initialEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
+                X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
 
-            for x_unit,label_unit in zip(X_bias, y_shuffled):
-                netValue = x_unit.dot(weightsCopy)
-                output = self._get_ouput(netValue)
-                changeFactor = (label_unit[0] - output) * self.lr
-                changeWeights = x_unit * changeFactor
-                weightsCopy = weightsCopy + changeWeights
+                for x_unit,label_unit in zip(X_bias, y_shuffled):
+                    netValue = x_unit.dot(weightsCopy)
+                    output = self._get_ouput(netValue)
+                    changeFactor = (label_unit[0] - output) * self.lr
+                    changeWeights = x_unit * changeFactor
+                    weightsCopy = weightsCopy + changeWeights
 
-            self.initial_weights = weightsCopy
-            # X_shuffled2, y_shuffled2 = self._shuffle_data(X_shuffled,y_shuffled)
-            lastEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
-            self._stopOrNot(initialEpochAccuracy,lastEpochAccuracy, numberOfEpochWithNoImprovement)
-            t.add_row([i,self.initial_weights,initialEpochAccuracy,lastEpochAccuracy,abs(lastEpochAccuracy-initialEpochAccuracy),len(numberOfEpochWithNoImprovement)])
+                self.initial_weights = weightsCopy
+                lastEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
+                if self.misclassification:
+                    self.misclassificationArray.append(1 - self.score(X_shuffled, y_shuffled))
 
-            i = i+1
+                # print(self.initial_weights)
+                self._stopOrNot(initialEpochAccuracy,lastEpochAccuracy, numberOfEpochWithNoImprovement)
+                t.add_row([i,self.initial_weights,initialEpochAccuracy,lastEpochAccuracy,abs(lastEpochAccuracy-initialEpochAccuracy),len(numberOfEpochWithNoImprovement)])
+
+                i = i+1
+            else:
+                break
 
         # print(t)
         print("Number of Epochs = ", i)
@@ -155,7 +165,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         accuracy_porcetange = correctPredictionsCount/y_reshaped.shape[0]
 
         # print("The RMSE is ",rmse)
-        return accuracy_porcetange
+        return round(accuracy_porcetange,3)
 
     def _shuffle_data(self, X, y):
         """ Shuffle the data! This _ prefix suggests that this method should only be called internally.
@@ -182,3 +192,6 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
             good_weights.append(weight)
         self.initial_weights = good_weights
         return self.initial_weights
+
+    def get_missclassification(self):
+        return self.misclassificationArray

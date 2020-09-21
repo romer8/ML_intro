@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+import matplotlib.transforms as mtransforms
 import numpy as np
 
 def graph_function(func,save_path=None):
@@ -16,7 +18,7 @@ def graph_function(func,save_path=None):
         plt.savefig(save_path) # don't call plt.savefig after plt.show!
     plt.show()
 
-def graph(x, y, labels=None, title="Untitled Graph", xlabel="X", ylabel="Y", points=True, style='fivethirtyeight',
+def graph(x, y, labels=None, weights=None, title="Untitled Graph", xlabel="X", ylabel="Y", points=True, style='fivethirtyeight',
           xlim=None, ylim=None, legend=True, save_path=None):
 
     """ Graph results
@@ -39,7 +41,9 @@ def graph(x, y, labels=None, title="Untitled Graph", xlabel="X", ylabel="Y", poi
     # prep data
     x = np.asarray(x)
     y = np.asarray(y)
-    labels = np.asarray(labels)
+    if labels is not None:
+
+        labels = np.asarray(labels)
 
     # set style, create plot
     plt.style.use(style)
@@ -58,20 +62,32 @@ def graph(x, y, labels=None, title="Untitled Graph", xlabel="X", ylabel="Y", poi
         plt.ylim(ylim)
 
     plot_list = []
+    if labels is not None:
+        for l in np.unique(labels.astype(int)):
+            idx = np.where(labels==l)
+            plot_list.append(ax.plot(x[idx],y[idx], point_style, label = str(l))[0])
 
-    for l in np.unique(labels.astype(int)):
-        idx = np.where(labels==l)
-        plot_list.append(ax.plot(x[idx],y[idx], point_style, label = str(l))[0])
+    ## Added to add the line of classification
+    if weights is not None:
+        y_line = _get_desicion_boundary(x,weights)
+        ax.plot(x,y_line)
 
     # Put legend below
     if legend:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=False, ncol=5, handles=plot_list,
                       facecolor = 'white', edgecolor = 'black')
-    plt.show()
+    plt.tight_layout()
+    # plt.show()
 
     if save_path:
         fig.savefig(save_path)
 
+def _get_desicion_boundary(Xs,weights):
+    array_lineY=[]
+    for x in Xs:
+        x2 = (-weights[0]/weights[1]) * x - weights[2]/weights[1]
+        array_lineY.append(x2)
+    return array_lineY
 
 if __name__ == "__main__":
     y = lambda x: 5 * x**2 + 1 # equation of a parabola
