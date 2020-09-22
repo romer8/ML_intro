@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import matplotlib.transforms as mtransforms
 import numpy as np
 
 def graph_function(func,save_path=None):
@@ -17,6 +15,14 @@ def graph_function(func,save_path=None):
     if save_path:
         plt.savefig(save_path) # don't call plt.savefig after plt.show!
     plt.show()
+
+def graph_lines(x,y,save_path):
+    x = np.asarray(x)
+    y = np.asarray(y)
+    plt.plot(x,y)
+    plt.show()
+    # if save_path:
+    #     fig.savefig(save_path)
 
 def graph(x, y, labels=None, weights=None, title="Untitled Graph", xlabel="X", ylabel="Y", points=True, style='fivethirtyeight',
           xlim=None, ylim=None, legend=True, save_path=None):
@@ -42,7 +48,6 @@ def graph(x, y, labels=None, weights=None, title="Untitled Graph", xlabel="X", y
     x = np.asarray(x)
     y = np.asarray(y)
     if labels is not None:
-
         labels = np.asarray(labels)
 
     # set style, create plot
@@ -65,12 +70,16 @@ def graph(x, y, labels=None, weights=None, title="Untitled Graph", xlabel="X", y
     if labels is not None:
         for l in np.unique(labels.astype(int)):
             idx = np.where(labels==l)
-            plot_list.append(ax.plot(x[idx],y[idx], point_style, label = str(l))[0])
+            plot_list.append(ax.plot(x[idx],y[idx], point_style, label = "Class " + str(l))[0])
+    else:
+        plot_list.append(ax.plot(x,y, point_style))
+
 
     ## Added to add the line of classification
     if weights is not None:
         y_line = _get_desicion_boundary(x,weights)
         ax.plot(x,y_line)
+        plot_list.append(ax.plot(x,y_line,label = "Boundary Desicion" )[0])
 
     # Put legend below
     if legend:
