@@ -5,6 +5,8 @@ sys.path.append("/home/elkin/university/gradSchool/Fall202/CS472/CS472")
 from tools import arff, splitData, generatePerceptronData, graph_tools
 import perceptron
 import itertools
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Perceptron
 
 ## Part 1 ##
 
@@ -148,7 +150,7 @@ SHUFFLE = False
 IW = np.zeros((data_vote[0]).shape[0]+1,).tolist()
 # IW = [0,0,0]
 misclassification_All_dict = {}
-for indx in range(6):
+for indx in range(5):
 
     trainingSet,trainingLabels,testSet,testLabels= splitData.getSplitData(data_vote,labels_vote,0.7)
     PClass_splits = perceptron.PerceptronClassifier(lr=LR,shuffle=SHUFFLE, deterministic=DET,initial_weights=IW,misclassification= True)
@@ -156,10 +158,23 @@ for indx in range(6):
     Accuracy_training = PClass_splits.score(trainingSet,trainingLabels)
     Accuracy_test = PClass_splits.score(testSet,testLabels)
     misclassification_All_dict[len(PClass_splits.get_missclassification())] =PClass_splits.get_missclassification()
+
+    trainingLabels_converted = trainingLabels.reshape(trainingLabels.shape[0],)
+    testLabels_converted = testLabels.reshape(testLabels.shape[0],)
+    clf = Perceptron(tol=1e-3, random_state=0)
+    clf.fit(trainingSet, trainingLabels_converted)
+    skitLearnWeights = clf.get_params()
+    Perceptron()
+    cfl_score_training = clf.score(trainingSet,trainingLabels_converted)
+    cfl_score_test = clf.score(testSet, testLabels_converted)
+
+    print("# Epochs = ", len(PClass_splits.get_missclassification()))
     print("Accuracy Training = [{:.2f}]".format(Accuracy_training))
     print("Accuracy Test = [{:.2f}]".format(Accuracy_test))
-    print("Final Weights =",PClass_splits.get_weights())
-    print(len(PClass_splits.get_missclassification()))
+    print("Final Weights = ",PClass_splits.get_weights())
+    print("SkitLearn Accuracy Training = [{:.2f}] ".format(cfl_score_training))
+    print("SkitLearn Accuracy Training = [{:.2f}] ".format(cfl_score_test))
+    # print("Final Weights = ",skitLearnWeights)
 
 epoch_runs = sorted(misclassification_All_dict)
 print(epoch_runs)
@@ -173,9 +188,24 @@ for indx in sorted (misclassification_All_dict):
 T = list(itertools.zip_longest(*misclassification_ordered, fillvalue=np.nan))
 mean_rate = [np.nanmean(i) for i in T]
 
-epochs_list = np.arange(epoch_runs[-1]+1).tolist()
-# print(mean_rate)
-print(epochs_list)
+epochs_list = np.arange(epoch_runs[-1]).tolist()
 
-graph_tools.graph(mean_rate, epochs_list,labels= None, weights=None, title="Misclassification Rate vs # Epoch", xlabel= "# Epochs", ylabel="Misclassification rate", points=False, style='fivethirtyeight',
+
+graph_tools.graph(epochs_list, mean_rate,labels=None, weights=None, title="Misclassification Rate vs # Epoch", xlabel= "# Epochs", ylabel="Misclassification rate", points=False, style='fivethirtyeight',
           xlim=None, ylim=None, legend=False, save_path="/home/elkin/university/gradSchool/Fall202/CS472/CS472/perceptron/plots/misclassification_rate_epoch")
+
+## PART 6
+print("Part 6")
+arff_path_Iris = r"training/iris.arff"
+# arff_path = r"training/linsep2nonorigin.arff"
+dataRawIris = arff.Arff(arff=arff_path_Iris, label_count=1)
+dataIris = dataRawIris.data[:,0:-1]
+labelsIris = dataRawIris.data[:,-1].reshape(-1,1)
+labelsIris_reshaped = labelsIris.reshape(labelsIris.shape[0],)
+perceptron_iris = Perceptron(tol=1e-3, random_state=0, shuffle = True)
+perceptron_iris.fit(dataIris, labelsIris_reshaped)
+Perceptron()
+perceptron_iris_score = perceptron_iris.score(dataIris, labelsIris_reshaped)
+weights_skici = perceptron_iris.sparsify()
+print("SkitLearn Accuracy Training = [{:.2f}] ".format(perceptron_iris_score))
+print("Weights = ", weights_skici)
