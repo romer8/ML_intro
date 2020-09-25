@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from prettytable import PrettyTable
 ### NOTE: The only methods you are required to have are:
 #   * predict
 #   * fit
@@ -13,7 +12,7 @@ from sklearn.linear_model import Perceptron
 
 class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self, lr=.1, shuffle=True, deterministic=10,initial_weights=None,stopCriteria=None,misclassification= False,misclassificationArray = []):
+    def __init__(self, lr=.1, shuffle=True, deterministic=10,initial_weights=None,stopCriteria=None,misclassification= False,misclassificationArray = [],numberEpochs=0):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -27,6 +26,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         self.stopCriteria = 0.015
         self.misclassification = misclassification
         self.misclassificationArray = []
+        self.numberEpochs = 0
     def fit(self, X, y, initial_weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
 
@@ -48,51 +48,51 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         ## Add the bias to each one of the X patterns ##
         biasArray = np.full((X.shape[0],1),1)
         numberOfEpochWithNoImprovement = [];
-        i = 1
-        t = PrettyTable(['Epoch','Weights', 'first RMSE','after RSME','DeltaAccuracy < 0.01','number of Epochs without Improvement' ])
+        # t = PrettyTable(['Epoch',"noImprove",'Weights', 'first RMSE','after RSME','TReshold','DeltaAccuracy < 0.01','number of Epochs without Improvement' ])
         ##Loop through each Epoch
         if self.misclassification:
             self.misclassificationArray.append(1 - self.score(X, y))
-
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
-            if i < 1000:
-                X_shuffled,y_shuffled = self._shuffle_data(X,y)
-                initialEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
-                X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+            X_shuffled,y_shuffled = self._shuffle_data(X,y)
+            initialEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
 
-                for x_unit,label_unit in zip(X_bias, y_shuffled):
-                    netValue = x_unit.dot(weightsCopy)
-                    output = self._get_ouput(netValue)
-                    changeFactor = (label_unit[0] - output) * self.lr
-                    changeWeights = x_unit * changeFactor
-                    weightsCopy = weightsCopy + changeWeights
+            if not thresholdValArray:
+                thresholdVal= initialEpochAccuracy
+                thresholdValArray.append(thresholdVal)
 
-                self.initial_weights = weightsCopy
-                lastEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
-                if self.misclassification:
-                    self.misclassificationArray.append(1 - self.score(X_shuffled, y_shuffled))
+            X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
 
-                # print(self.initial_weights)
-                self._stopOrNot(initialEpochAccuracy,lastEpochAccuracy, numberOfEpochWithNoImprovement)
-                t.add_row([i,self.initial_weights,initialEpochAccuracy,lastEpochAccuracy,abs(lastEpochAccuracy-initialEpochAccuracy),len(numberOfEpochWithNoImprovement)])
+            for x_unit,label_unit in zip(X_bias, y_shuffled):
+                netValue = x_unit.dot(weightsCopy)
+                output = self._get_ouput(netValue)
+                changeFactor = (label_unit[0] - output) * self.lr
+                changeWeights = x_unit * changeFactor
+                weightsCopy = weightsCopy + changeWeights
+            weightsCopyIfConvergeBefore = self.initial_weights.copy()
 
-                i = i+1
-            else:
+            self.initial_weights = weightsCopy
+            lastEpochAccuracy = self.getRSME(X_shuffled,y_shuffled)
+            if lastEpochAccuracy < 0.000001:
+                self.initial_weights = weightsCopyIfConvergeBefore
                 break
 
-        # print(t)
-        print("Number of Epochs = ", i)
-        return self
+            if self.misclassification:
+                self.misclassificationArray.append(1 - self.score(X_shuffled, y_shuffled))
+            # t.add_row([i,len(noImprove),self.initial_weights,initialEpochAccuracy,lastEpochAccuracy,thresholdVal,abs(lastEpochAccuracy-initialEpochAccuracy),len(numberOfEpochWithNoImprovement)])
+            self._stopOrNot(initialEpochAccuracy,lastEpochAccuracy, numberOfEpochWithNoImprovement)
 
+
+            self.numberEpochs = self.numberEpochs + 1
+
+        return self
+    def getNUmberOfEpochs(self):
+        return self.numberEpochs
+    
     def _stopOrNot(self,initialEpochAccuracy,lastEpochAccuracy,numberOfEpochWithNoImprovement):
-        # print(initialEpochAccuracy)
-        # print(lastEpochAccuracy)
         if (abs(initialEpochAccuracy - lastEpochAccuracy) < self.stopCriteria) or (initialEpochAccuracy > lastEpochAccuracy):
             numberOfEpochWithNoImprovement.append(abs(initialEpochAccuracy - lastEpochAccuracy))
         else:
             numberOfEpochWithNoImprovement.clear()
-        return
-
     def _get_ouput(self,netValue):
         if netValue > 0:
             return 1
