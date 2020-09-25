@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import random
+## change Path ##
 sys.path.append("/home/elkin/university/gradSchool/Fall202/CS472/CS472")
 from tools import arff, splitData, generatePerceptronData, graph_tools
 import perceptron
@@ -15,23 +16,24 @@ arff_path = r"training/data_banknote_authentication.arff"
 dataRaw = arff.Arff(arff=arff_path, label_count=1)
 data = dataRaw.data[:,0:-1]
 labels = dataRaw.data[:,-1].reshape(-1,1)
-# trainingSet,trainingLabels,testSet,testLabels= splitData.getSplitData(data,labels,0.7)
 
 
 ## Define the initial Parameters ##
 LR = 0.1
 DET = 10
 SHUFFLE = False
-IW = [0,0,0,0,0]
-# IW = [0,0,0]
+IW = np.zeros((data[0]).shape[0]+1,).tolist()
+
 
 
 
 PClass = perceptron.PerceptronClassifier(lr=LR,shuffle=SHUFFLE, deterministic=DET,initial_weights=IW)
 PClass.fit(data,labels)
 Accuracy = PClass.score(data,labels)
+print("# Epochs = ",PClass.getNUmberOfEpochs())
 print("Accuray = [{:.2f}]".format(Accuracy))
 print("Final Weights =",PClass.get_weights())
+print("")
 
 
 # x1, x2 = zip(*data.tolist())
@@ -46,7 +48,6 @@ print("Final Weights =",PClass.get_weights())
 ##Part 2
 
 ## Uncomment both to generate the linear and not linear datasets
-# generatePerceptronData.generateDataSet("linearSeparableDataSet",True,(8,),[-1,1])
 # generatePerceptronData.generateDataSet("nonLinSeparableDataSet",False,(8,),[-1,1])
 
 
@@ -83,31 +84,38 @@ graph_tools.graph(x1_nls, x2_nls, labels_nls_array, None, "Non Linear Separable"
 
 ## Define the initial Parameters ##
 DET3 = 10
-SHUFFLE3 = False
-IW = [0,0,0]
+SHUFFLE3 = True
+IW = np.zeros((data_nls[0]).shape[0]+1,).tolist()
 LR_array = np.arange(0.1,1.1,0.1).tolist()
 
+print("")
 print("Linear data set")
 for LRs in LR_array:
     LRs= round(LRs,1)
     PClass_ls = perceptron.PerceptronClassifier(lr=LRs,shuffle=SHUFFLE3, deterministic=DET3,initial_weights=IW)
     PClass_ls.fit(data_ls,labels_ls)
     Accuracy_ls = PClass_ls.score(data_ls,labels_ls)
+    print("")
+    print("# Epochs = ",PClass_ls.getNUmberOfEpochs())
     print("LR = " , LRs)
     print("Accuray = [{:.2f}]".format(Accuracy_ls))
     print("Final Weights =",PClass_ls.get_weights())
 
+print("")
 print("Non linear data set")
 for LRs in LR_array:
     LRs= round(LRs,1)
     PClass_nls = perceptron.PerceptronClassifier(lr=LRs,shuffle=SHUFFLE3, deterministic=DET3,initial_weights=IW)
     PClass_nls.fit(data_nls,labels_nls)
     Accuracy_nls = PClass_nls.score(data_nls,labels_nls)
+    print("")
+    print("# Epochs = ",PClass_ls.getNUmberOfEpochs())
     print("LR = " , LRs)
     print("Accuray = [{:.2f}]".format(Accuracy_nls))
     print("Final Weights =",PClass_nls.get_weights())
 
 ## PART 4
+print("")
 print("PART 4")
 print("Linear data set")
 
@@ -146,7 +154,7 @@ labels_vote = dataRaw_vote.data[:,-1].reshape(-1,1)
 ## Define the initial Parameters ##
 LR = 0.1
 DET = 10
-SHUFFLE = False
+SHUFFLE = True
 IW = np.zeros((data_vote[0]).shape[0]+1,).tolist()
 # IW = [0,0,0]
 misclassification_All_dict = {}
@@ -173,7 +181,7 @@ for indx in range(5):
     print("Accuracy Test = [{:.2f}]".format(Accuracy_test))
     print("Final Weights = ",PClass_splits.get_weights())
     print("SkitLearn Accuracy Training = [{:.2f}] ".format(cfl_score_training))
-    print("SkitLearn Accuracy Training = [{:.2f}] ".format(cfl_score_test))
+    print("SkitLearn Accuracy Test = [{:.2f}] ".format(cfl_score_test))
     # print("Final Weights = ",skitLearnWeights)
 
 epoch_runs = sorted(misclassification_All_dict)
