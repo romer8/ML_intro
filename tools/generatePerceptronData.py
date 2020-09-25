@@ -40,9 +40,3 @@ def generateDataSet(nameFile,linearSeparableBool,dataSize,rangeBetweenVals):
             for datas in d[original_filename]:
                 data = (str(datas[0]),str(datas[1]),str(datas[2]))
                 fp.write("%s,%s,%s\n" % data)
-
-
-
-
-# generateDataSet("data1",True,(8,),[-1,1])
-# generateDataSet("data2",False,(8,),[-1,1])
