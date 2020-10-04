@@ -9,7 +9,8 @@ import mlp
 # mat = Arff("../datasets/linsep2nonorigin.arff")
 # data = mat.data[:,0:-1]
 # labels = mat.data[:,-1].reshape(-1,1)
-BClass = mlp.MLPClassifier(lr=0.1,momentum=0.5,shuffle=False,deterministic=10,hidden_layer_widths=[3,4,5])
+BClass = mlp.MLPClassifier(lr=0.1,momentum=0.5,shuffle=False,deterministic=10)
 testArray = np.array([[0,1,3],[1,2,3],[7,5,5]])
-BClass.initialize_weights(testArray)
+testArrayY = np.array([[3],[2],[1]])
+BClass.initialize_weights(testArray,testArrayY)
 # BClass.fit(data,labels)

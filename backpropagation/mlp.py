@@ -58,7 +58,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         pass
 
-    def initialize_weights(self,X):
+    def initialize_weights(self,X,y):
         """ Initialize weights for perceptron. Don't forget the bias!
             Use one layer of hidden nodes with the number of hidden nodes being twice the number of inputs.
 
@@ -81,13 +81,23 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 weightsTemp.append(layerWeight)
         else:
             layerWeight = []
-            for node in range(0, len(X[0])):
+            for node in range(0, len(X[0]) * 2):
                 nodeWeight = random.uniform(0 , 0.01)
                 checkMean.append(nodeWeight)
                 layerWeight.append(nodeWeight)
 
             layerWeight.append(1)
             weightsTemp.append(layerWeight)
+
+        """Output layer weigths added"""
+        layerWeight = []
+        for nodeOutput in range(0, len(y[0])):
+            nodeWeight = random.uniform(0 , 0.01)
+            checkMean.append(nodeWeight)
+            layerWeight.append(nodeWeight)
+
+        layerWeight.append(1)
+        weightsTemp.append(layerWeight)
 
 
         self.weights = weightsTemp
