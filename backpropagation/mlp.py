@@ -67,6 +67,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         weightsTemp = []
         checkMean = []
+
+        """ Hidden layer output initialization"""
         if self.hidden_layer_widths is not None:
             for hiddenLayer in self.hidden_layer_widths:
                 layerWeight = []
@@ -75,15 +77,18 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                     checkMean.append(nodeWeight)
                     layerWeight.append(nodeWeight)
 
+                layerWeight.append(1)
                 weightsTemp.append(layerWeight)
-
         else:
             layerWeight = []
             for node in range(0, len(X[0])):
                 nodeWeight = random.uniform(0 , 0.01)
                 checkMean.append(nodeWeight)
                 layerWeight.append(nodeWeight)
+
+            layerWeight.append(1)
             weightsTemp.append(layerWeight)
+
 
         self.weights = weightsTemp
         print(sum(checkMean)/len(checkMean))
