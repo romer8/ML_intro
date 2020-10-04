@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import random
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 ### NOTE: The only methods you are required to have are:
@@ -11,7 +12,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self,lr=.1, momentum=0, shuffle=True,hidden_layer_widths=None):
+    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None, weights = None):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -23,10 +24,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         Example:
             mlp = MLPClassifier(lr=.2,momentum=.5,shuffle=False,hidden_layer_widths = [3,3]),  <--- this will create a model with two hidden layers, both 3 nodes wide
         """
-        self.hidden_layer_widths
+        self.hidden_layer_widths = hidden_layer_widths
+        self.weights = weights
         self.lr = lr
         self.momentum = momentum
         self.shuffle = shuffle
+        self.deterministic = deterministic
 
 
     def fit(self, X, y, initial_weights=None):
@@ -55,14 +58,37 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         pass
 
-    def initialize_weights(self):
+    def initialize_weights(self,X):
         """ Initialize weights for perceptron. Don't forget the bias!
+            Use one layer of hidden nodes with the number of hidden nodes being twice the number of inputs.
 
         Returns:
 
         """
+        weightsTemp = []
+        checkMean = []
+        if self.hidden_layer_widths is not None:
+            for hiddenLayer in self.hidden_layer_widths:
+                layerWeight = []
+                for node in range(0, hiddenLayer):
+                    nodeWeight = random.uniform(0 , 0.001)
+                    checkMean.append(nodeWeight)
+                    layerWeight.append(nodeWeight)
 
-        return [0]
+                weightsTemp.append(layerWeight)
+
+        else:
+            layerWeight = []
+            for node in range(0, len(X[0])):
+                nodeWeight = random.uniform(0 , 0.01)
+                checkMean.append(nodeWeight)
+                layerWeight.append(nodeWeight)
+            weightsTemp.append(layerWeight)
+
+        self.weights = weightsTemp
+        print(sum(checkMean)/len(checkMean))
+        print(weightsTemp)
+        return
 
     def score(self, X, y):
         """ Return accuracy of model on a given dataset. Must implement own score function.
@@ -113,8 +139,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         net = _get_net(X,W)
         output = _output_node(net)
         outputDerivative = _output_node_derivative(net)
-        if isHidden:
-            for
+        # if isHidden:
+        #     for
 
         return 0
     ### Not required by sk-learn but required by us for grading. Returns the weights.
