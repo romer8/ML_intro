@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 ### NOTE: The only methods you are required to have are:
@@ -16,7 +17,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         Args:
             lr (float): A learning rate / step size.
             shuffle(boolean): Whether to shuffle the training data each epoch. DO NOT SHUFFLE for evaluation / debug datasets.
-            momentum(float): The momentum coefficent 
+            momentum(float): The momentum coefficent
         Optional Args (Args we think will make your life easier):
             hidden_layer_widths (list(int)): A list of integers which defines the width of each hidden layer if hidden layer is none do twice as many hidden nodes as input nodes.
         Example:
@@ -84,6 +85,38 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         pass
 
+    ## Gives the validation adn train sets
+    def _getValidationAndTrain(self,X):
+        return 0
+
+    ## General Nodes Equations
+    def _change_weight_generalOutput_node(self,c,output,target):
+        change_delta = (target - _output_node(net)) * _output_node_derivative(_output_node(net))
+        return change_delta
+
+    ## Hidden Nodes Equations ##
+    def _change_weight_hidden_node(self,c,net,delta,weight):
+        change_delta = c * _output_node(net) * delta * weight * _output_node_derivative(_output_node(net))
+        return change_delta
+    ## shared Equations ##
+    def _output_node(self,net):
+        return (1/(1+exp(-net)))
+
+    def _output_node_derivative(self, net):
+        return _output_node(net) * (1- _output_node(net))
+
+    def _get_net(self,X,w):
+        X2 = w*X
+        return np.sum(X2)
+
+    def  _get_Change_hidden_node(self, X, W, isHidden):
+        net = _get_net(X,W)
+        output = _output_node(net)
+        outputDerivative = _output_node_derivative(net)
+        if isHidden:
+            for
+
+        return 0
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
         pass
