@@ -45,6 +45,10 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         """
         self.initial_weights = self.initialize_weights() if not initial_weights else initial_weights
+        # biasArray = np.full((X.shape[0],1),1)
+        # X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+
+
 
         return self
 
@@ -124,11 +128,82 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             It might be easier to concatenate X & y and shuffle a single 2D array, rather than
              shuffling X and y exactly the same way, independently.
         """
-        pass
+        if self.shuffle:
+            X_unshuffled = X.copy()
+            y_unshuffled = y.copy()
+            idx = np.arange(X.shape[0])
+            np.random.shuffle(idx)
+            X_shuffled= X_unshuffled[idx]
+            y_shuffled= y_unshuffled[idx]
+            return [X_shuffled, y_shuffled]
+        else:
+            return[X,y]
 
     ## Gives the validation adn train sets
     def _getValidationAndTrain(self,X):
         return 0
+
+    """Initialize netweork by creating a dict"""
+    def _inittialize_network(self, X, y):
+        network = []
+        initialize_weights(X,y)
+        for layerWeight in self.initial_weights:
+            layer = []
+            for weight in layerWeight:
+                node = {
+                    'net':0,
+                    'weight':weight
+                }
+                layer.append(node)
+
+            network.append(layer)
+
+        return network
+
+
+    """Get all the net values from a layer"""
+
+    def _getNetValuesLayer(layer):
+        nets = []
+        for node in layer:
+            nets.append(node.net)
+        return np.array(nets)
+
+    """ Get the net value for a node
+    X = 2d numpy array
+    input = float
+    return float
+    """
+
+    def _get_net_node(self,Input,w):
+        X2 = w * Input
+        return np.sum(X2)
+
+    """ Activate the node function
+    X = 2d numpy array
+    net = float
+    return float
+    """
+    def _activate_node(self,net):
+        return (1/(1+exp(-net)))
+
+    """ Derivative of Activation function
+    net = float
+    return float
+    """
+    def _activate_node_derivative(self, net):
+        return _activate_node(net) * (1-_activate_node(net))
+
+    """ Fordward Propagation of the Network"""
+    def _forwardProp(self, inputs, network):
+        inputForForward = inputs
+        for layer in network:
+            for node in layer:
+                n = _get_net_node(node.weight, inputForForward)
+                node['net'] = n
+            inputForForward = _getNetValuesLayer(layer)
+
+        return network
 
     ## General Nodes Equations
     def _change_weight_generalOutput_node(self,c,output,target):
@@ -140,15 +215,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         change_delta = c * _output_node(net) * delta * weight * _output_node_derivative(_output_node(net))
         return change_delta
     ## shared Equations ##
-    def _output_node(self,net):
-        return (1/(1+exp(-net)))
 
-    def _output_node_derivative(self, net):
-        return _output_node(net) * (1- _output_node(net))
 
-    def _get_net(self,X,w):
-        X2 = w*X
-        return np.sum(X2)
 
     def  _get_Change_hidden_node(self, X, W, isHidden):
         net = _get_net(X,W)
