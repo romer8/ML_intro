@@ -48,18 +48,19 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         #Initialize network ##
         networkObject = self._initialize_network()
+        ## make an if statement to stop it
 
-        #
-        # X_shuffled,y_shuffled = self._shuffle_data(X,y)
-        # biasArray = np.full((X.shape[0],1),1)
-        # X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+        X_shuffled,y_shuffled = self._shuffle_data(X,y)
+        biasArray = np.full((X.shape[0],1),1)
+        X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
         # ### Initialize the network and print###
         # print("network Initialization")
         # print(networkObject)
         #
         # print("forward")
-        # self._forwardProp(X_bias,networkObject)
-        # print(networkObject)
+        self._forwardProp(X_bias[0],networkObject)
+        print(networkObject)
+
         return self
 
     def predict(self, X):
@@ -85,7 +86,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         sizeWidthOutputs = len(np.unique(y))
         # unique, counts = np.unique(x, return_counts=True)
         sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
-        randomValue = 0 # random.uniform(0 , 0.00001)
+        randomValue = 1 # random.uniform(0 , 0.00001)
         if self.hidden_layer_widths is None:
             hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(sizeWidthHiddenLayersDefault)]
             # print(hidden_layer)
@@ -110,7 +111,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
 
         # print(len(networkWeights))
-        # print(networkWeights)
+        print(networkWeights)
         return networkWeights
 
     def score(self, X, y):
@@ -178,7 +179,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
             network.append(layer)
         print(network)
-        print(len(network))
+        # print(len(network))
         return network
 
 
@@ -190,6 +191,15 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             nets.append(node['net'])
         return np.array(nets)
 
+    """Get all the output values from a layer"""
+
+    def _getOutputValuesLayer(self,layer):
+        outputs = []
+        for node in layer:
+            outputs.append(self._activate_node(node['net']))
+        outputs[-1] = 1
+        return np.array(outputs)
+
     """ Get the net value for a node
     X = 2d numpy array
     input = float
@@ -197,8 +207,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     """
 
     def _get_net_node(self,Input,w):
-        X2 = w * Input
-        return np.sum(X2)
+        # print(np.dot(w,Input))
+        return np.dot(w,Input)
 
     """ Activate the node function
     X = 2d numpy array
@@ -206,7 +216,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     return float
     """
     def _activate_node(self,net):
-        return (1/(1+exp(-net)))
+        return (1/(1 + math.exp(-net)))
 
     """ Derivative of Activation function
     net = float
@@ -218,17 +228,38 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     """ Fordward Propagation of the Network"""
     def _forwardProp(self, inputs, network):
         inputForForward = inputs
-        j = 1
-        for layer in network:
-            i = 1
-            for node in layer:
-                if i < len(layer) and j < len(network): ## safe guard for the bias node in the layer
-                    n = self._get_net_node(node['weight'], inputForForward)
-                    node['net'] = n
-                    i = i + 1
-            # print(layer)
-            inputForForward = self._getNetValuesLayer(layer)
-            j = j + 1
+        for indxLayer in range(0, len(network)):
+            print(inputForForward)
+            if indxLayer < len(network) - 1:
+                for indxNode in range(0, len(network[indxLayer])):
+                    if indxNode < len(network[indxLayer]) - 1:
+                        weight_np = np.array(network[indxLayer][indxNode]['weights'])
+                        # print(weight_np)
+                        # print(inputForForward)
+                        n = self._get_net_node(inputForForward, weight_np)
+                        network[indxLayer][indxNode]['net'] = n
+            else:
+                for indxNode in range(0, len(network[indxLayer])):
+                    weight_np = np.array(network[indxLayer][indxNode]['weights'])
+                    # print(weight_np)
+                    # print(inputForForward)
+                    n = self._get_net_node(inputForForward, weight_np)
+                    network[indxLayer][indxNode]['net'] = n
+
+            inputForForward = self._getOutputValuesLayer(network[indxLayer])
+
+
+        # j = 1
+        # for layer in network:
+        #     i = 1
+        #     for node in layer:
+        #         if i < len(layer) and j < len(network): ## safe guard for the bias node in the layer
+        #             n = self._get_net_node(node['weight'], inputForForward)
+        #             node['net'] = n
+        #             i = i + 1
+        #     # print(layer)
+        #     inputForForward = self._getNetValuesLayer(layer)
+        #     j = j + 1
 
         return network
 
