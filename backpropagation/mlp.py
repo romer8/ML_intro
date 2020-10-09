@@ -12,7 +12,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None, weights = None):
+    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -25,12 +25,11 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             mlp = MLPClassifier(lr=.2,momentum=.5,shuffle=False,hidden_layer_widths = [3,3]),  <--- this will create a model with two hidden layers, both 3 nodes wide
         """
         self.hidden_layer_widths = hidden_layer_widths
-        self.weights = weights
+        self.weights = None
         self.lr = lr
         self.momentum = momentum
         self.shuffle = shuffle
         self.deterministic = deterministic
-
 
     def fit(self, X, y, initial_weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
@@ -44,12 +43,22 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
 
         """
-        self.initial_weights = self.initialize_weights() if not initial_weights else initial_weights
+        if self.weights is None:
+            self.weights = self.initialize_weights(X,y)
+
+        ##Initialize network ##
+        # networkObject = self._initialize_network()
+        #
+        # X_shuffled,y_shuffled = self._shuffle_data(X,y)
         # biasArray = np.full((X.shape[0],1),1)
         # X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
-
-
-
+        # ### Initialize the network and print###
+        # print("network Initialization")
+        # print(networkObject)
+        #
+        # print("forward")
+        # self._forwardProp(X_bias,networkObject)
+        # print(networkObject)
         return self
 
     def predict(self, X):
@@ -69,45 +78,39 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         Returns:
 
         """
-        weightsTemp = []
-        checkMean = []
 
-        """ Hidden layer output initialization"""
-        if self.hidden_layer_widths is not None:
-            for hiddenLayer in self.hidden_layer_widths:
-                layerWeight = []
-                for node in range(0, hiddenLayer):
-                    nodeWeight = random.uniform(0 , 0.001)
-                    checkMean.append(nodeWeight)
-                    layerWeight.append(nodeWeight)
+        networkWeights = []
+        sizeWidthInputs = len(X[0]) + 1
+        sizeWidthOutputs = len(np.unique(y))
+        # unique, counts = np.unique(x, return_counts=True)
+        sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
+        randomValue = 0 # random.uniform(0 , 0.00001)
+        if self.hidden_layer_widths is None:
+            hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(sizeWidthHiddenLayersDefault)]
+            # print(hidden_layer)
+            networkWeights.append(hidden_layer)
 
-                layerWeight.append(1)
-                weightsTemp.append(layerWeight)
         else:
-            layerWeight = []
-            for node in range(0, len(X[0]) * 2):
-                nodeWeight = random.uniform(0 , 0.01)
-                checkMean.append(nodeWeight)
-                layerWeight.append(nodeWeight)
-
-            layerWeight.append(1)
-            weightsTemp.append(layerWeight)
-
-        """Output layer weigths added"""
-        layerWeight = []
-        for nodeOutput in range(0, len(y[0])):
-            nodeWeight = random.uniform(0 , 0.01)
-            checkMean.append(nodeWeight)
-            layerWeight.append(nodeWeight)
-
-        layerWeight.append(1)
-        weightsTemp.append(layerWeight)
+            sizeWidthHiddenLayersCustomized = self.hidden_layer_widths[0]
+            for hiddenNodeIndx in range (0, len(self.hidden_layer_widths)):
+                if hiddenNodeIndx < 1:
+                    hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    networkWeights.append(hidden_layer)
+                    # print(hidden_layer)
+                else:
+                    hidden_layer = [{'weights':[randomValue for i in range(self.hidden_layer_widths[hiddenNodeIndx-1] +1 )]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    networkWeights.append(hidden_layer)
 
 
-        self.weights = weightsTemp
-        print(sum(checkMean)/len(checkMean))
-        print(weightsTemp)
-        return
+        ##Output Weights ##
+        last_hidden_layer_width = len(networkWeights[-1])
+        output_layer = [{'weights':[randomValue for i in range(last_hidden_layer_width)]} for j in range(sizeWidthOutputs)]
+        networkWeights.append(output_layer)
+
+
+        # print(len(networkWeights))
+        print(networkWeights)
+        return networkWeights
 
     def score(self, X, y):
         """ Return accuracy of model on a given dataset. Must implement own score function.
@@ -144,17 +147,25 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         return 0
 
     """Initialize netweork by creating a dict"""
-    def _inittialize_network(self, X, y):
+    def _initialize_network(self):
         network = []
-        initialize_weights(X,y)
-        for layerWeight in self.initial_weights:
+        print(self.weights)
+        # self.initialize_weights(X,y)
+        for layerWeight in self.weights:
             layer = []
             for weight in layerWeight:
-                node = {
-                    'net':0,
-                    'weight':weight
-                }
-                layer.append(node)
+                if weight < 1:
+                    node = {
+                        "net":0,
+                        "weight":weight
+                    }
+                    layer.append(node)
+                else:
+                    node = {
+                        "net":1,
+                        "weight":weight
+                    }
+                    layer.append(node)
 
             network.append(layer)
 
@@ -163,10 +174,10 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     """Get all the net values from a layer"""
 
-    def _getNetValuesLayer(layer):
+    def _getNetValuesLayer(self,layer):
         nets = []
         for node in layer:
-            nets.append(node.net)
+            nets.append(node['net'])
         return np.array(nets)
 
     """ Get the net value for a node
@@ -197,11 +208,17 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     """ Fordward Propagation of the Network"""
     def _forwardProp(self, inputs, network):
         inputForForward = inputs
+        j = 1
         for layer in network:
+            i = 1
             for node in layer:
-                n = _get_net_node(node.weight, inputForForward)
-                node['net'] = n
-            inputForForward = _getNetValuesLayer(layer)
+                if i < len(layer) and j < len(network): ## safe guard for the bias node in the layer
+                    n = self._get_net_node(node['weight'], inputForForward)
+                    node['net'] = n
+                    i = i + 1
+            # print(layer)
+            inputForForward = self._getNetValuesLayer(layer)
+            j = j + 1
 
         return network
 
