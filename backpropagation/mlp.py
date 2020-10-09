@@ -46,8 +46,9 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         if self.weights is None:
             self.weights = self.initialize_weights(X,y)
 
-        ##Initialize network ##
-        # networkObject = self._initialize_network()
+        #Initialize network ##
+        networkObject = self._initialize_network()
+
         #
         # X_shuffled,y_shuffled = self._shuffle_data(X,y)
         # biasArray = np.full((X.shape[0],1),1)
@@ -109,7 +110,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
 
         # print(len(networkWeights))
-        print(networkWeights)
+        # print(networkWeights)
         return networkWeights
 
     def score(self, X, y):
@@ -149,26 +150,26 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     """Initialize netweork by creating a dict"""
     def _initialize_network(self):
         network = []
-        print(self.weights)
-        # self.initialize_weights(X,y)
+        # print(self.weights)
         for layerWeight in self.weights:
             layer = []
             for weight in layerWeight:
-                if weight < 1:
-                    node = {
-                        "net":0,
-                        "weight":weight
-                    }
-                    layer.append(node)
-                else:
-                    node = {
-                        "net":1,
-                        "weight":weight
-                    }
-                    layer.append(node)
+                # if weight < 1:
+                #     node = {
+                #         "net":0,
+                #         "weight":weight
+                #     }
+                #     layer.append(node)
+                # else:
+                node = {
+                    "net":0,
+                    "weights":weight['weights']
+                }
+                layer.append(node)
 
             network.append(layer)
 
+        print(network)
         return network
 
 
