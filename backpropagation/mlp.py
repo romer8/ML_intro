@@ -151,25 +151,34 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     def _initialize_network(self):
         network = []
         # print(self.weights)
-        for layerWeight in self.weights:
+
+        for layerIndx in range(0, len(self.weights)):
             layer = []
-            for weight in layerWeight:
-                # if weight < 1:
-                #     node = {
-                #         "net":0,
-                #         "weight":weight
-                #     }
-                #     layer.append(node)
-                # else:
-                node = {
-                    "net":0,
-                    "weights":weight['weights']
-                }
-                layer.append(node)
+            if layerIndx < len(self.weights) - 1:
+                for nodeIndx in range(0, len(self.weights[layerIndx])):
+                    if nodeIndx < len(self.weights[layerIndx]) - 1:
+                        node = {
+                            "net":0,
+                            "weights":self.weights[layerIndx][nodeIndx]['weights']
+                        }
+                        layer.append(node)
+                    else:
+                        node = {
+                            "net":1,
+                            "weights":self.weights[layerIndx][nodeIndx]['weights']
+                        }
+                        layer.append(node)
+            else:
+                for nodeIndx in range(0, len(self.weights[layerIndx])):
+                    node = {
+                        "net":0,
+                            "weights":self.weights[layerIndx][nodeIndx]['weights']
+                    }
+                    layer.append(node)
 
             network.append(layer)
-
         print(network)
+        print(len(network))
         return network
 
 
