@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None):
+    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None,weights = None):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -42,7 +42,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 y_hot[indx] = 1
         return y_hot
 
-    def fit(self, X, y, initial_weights=None):
+    def fit(self, X, y, weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
 
         Args:
@@ -71,12 +71,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
         # biasArray = np.full((X_train.shape[0],1),1)
         biasArray = np.full((X.shape[0],1),1)
-
+        bestMSEsoFar = 1000
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
-
             # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
             X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+            mse_instances = np.array([])
             for x_unit,label_unit in zip(X_bias, y_shuffled):
                 ## MAKE Y HOT PLATE ##
                 target = self._making_y_hot(y_shuffled,label_unit)
@@ -95,10 +95,38 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 print("NEW WEIGHTS")
                 print(networkObject)
                 # break
-            ## Calculate MSE for improvement ###
+                ## Calculate MSE of instance ###
+                outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True):
+                mse = self._getMSE(outputs_outputLayer,target)
+                mse_instances.append(mse)
+            ### CALCULATING THE MEAN MSE FOR THE EPOCH
+            mean_mse = np.mean(mse_instances)
+            if mean_mse < 0.000001:
+                break
+            if abs(bestMSEsoFar - mean_mse) < 0.015:
+                numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
+            else:
+                if bestMSEsoFar < mean_mse:
+                    bestMSEsoFar = mean_mse
+                else:
+                    numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
+
+            self.weights = self._getWeights_from_network(networkObject)
 
             break
         return self
+
+    """ Function to retrieve the weights from the network object"""
+    def _getWeights_from_network(self, network):
+        weights_network = []
+        for layer in network:
+            weights_layer = []
+            for node in layer:
+                w = node['weights']
+                weights_layer.append(w)
+            weights_network.append(weights_layer)
+
+        return weights_network
 
     def _getMSE(self, outputs, targets):
         errors = np.subtract(targets,outputs)
@@ -402,4 +430,4 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
-        pass
+        return self.weights
