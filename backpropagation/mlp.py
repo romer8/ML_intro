@@ -157,9 +157,18 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         else:
             return[X,y]
 
-    ## Gives the validation adn train sets
-    def _getValidationAndTrain(self,X):
-        return 0
+    """ Split data into validation and trainingSets"""
+    def _getValidationAndTrain(self,X,y,valSize,isShuffle):
+         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, shuffle = isShuffle) # 0.25 x 0.8 = 0.2
+        return  X_train, X_val, y_train, y_val
+
+    """ Split data into training and validation"""
+    def _getTestTraining(self,X,y,testSize,isShuffle):
+        ##put 0 to testSize for all the training
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, shuffle=isShuffle)
+
+        return X_train, X_test, y_train, y_test
 
     """Initialize netweork by creating a dict"""
     def _initialize_network(self):
@@ -210,7 +219,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         return np.array(nets)
 
     """Get all the output values from a layer"""
-
     def _getOutputValuesLayer(self,layer, isOutput):
         outputs = []
         for node in layer:
@@ -225,7 +233,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     input = float
     return float
     """
-
     def _get_net_node(self,Input,w):
         # print(np.dot(w,Input))
         return round(np.dot(w,Input),5)
@@ -267,6 +274,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
             inputForForward = self._getOutputValuesLayer(network[indxLayer],False)
 
+    """ Backward Propagation of the Network"""
     def _backwardProp(self, network, target, input):
         desv_network = []
         weight_change_network = []
