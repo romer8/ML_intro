@@ -69,8 +69,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         numberOfEpochWithNoImprovement = [];
         ##Make the validation and training sets ###
         X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
-        # biasArray = np.full((X_train.shape[0],1),1)
-        biasArray = np.full((X.shape[0],1),1)
+        biasArray = np.full((X_train.shape[0],1),1)
+        # biasArray = np.full((X.shape[0],1),1)
         bestMSEsoFar = 1000
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
             # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
@@ -95,26 +95,50 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 print("NEW WEIGHTS")
                 print(networkObject)
                 # break
-                ## Calculate MSE of instance ###
-                outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True):
-                mse = self._getMSE(outputs_outputLayer,target)
-                mse_instances.append(mse)
-            ### CALCULATING THE MEAN MSE FOR THE EPOCH
-            mean_mse = np.mean(mse_instances)
+            ##UPDATE THE WEIGHTS TO THE LAST MLP WEIGHTS ##
+            self.weights = self._getWeights_from_network(networkObject)
+
+            ### CALCULATING THE MEAN MSE FOR THE VALIDATION SET
+            mean_mse = self._get_mse_valSet(X_val,y_val)
             if mean_mse < 0.000001:
                 break
-            if abs(bestMSEsoFar - mean_mse) < 0.015:
-                numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
-            else:
-                if bestMSEsoFar < mean_mse:
-                    bestMSEsoFar = mean_mse
-                else:
-                    numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
 
-            self.weights = self._getWeights_from_network(networkObject)
+            self._increaseNumberOfEpochWithNoImprovement(bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement)
+
+
 
             break
         return self
+
+""" Function to retrieve the mean instance MSE """"
+
+    def _get_mse_valSet(self,Xval,yVal):
+        mse_instances = np.array([])
+        networkObject = self._initialize_network()
+        biasArray = np.full((Xval.shape[0],1),1)
+        X_bias = np.concatenate((Xval,biasArray),axis=1)
+
+        for x_unit,label_unit in zip(X_bias, yVal):
+            target = self._making_y_hot(yVal,label_unit)
+            self._forwardProp(x_unit,networkObject)
+            outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True):
+            mse = self._getMSE(outputs_outputLayer,target)
+            mse_instances.append(mse)
+
+        ### CALCULATING THE MEAN MSE FOR THE EPOCH
+        mean_mse = np.mean(mse_instances)
+        return mean_mse
+
+    """ Function that increases or not the numberOf Epochs with no improvement""""
+    def _increaseNumberOfEpochWithNoImprovement(self,bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement):
+        if abs(bestMSEsoFar - mean_mse) < 0.015:
+            numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
+        else:
+            if bestMSEsoFar < mean_mse:
+                bestMSEsoFar = mean_mse
+            else:
+                numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
+        pass
 
     """ Function to retrieve the weights from the network object"""
     def _getWeights_from_network(self, network):
