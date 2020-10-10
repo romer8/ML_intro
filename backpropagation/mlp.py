@@ -31,6 +31,17 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.shuffle = shuffle
         self.deterministic = deterministic
 
+    """makes a numpy hot plate array for the labels"""
+
+    def _making_y_hot(self,y, singleY):
+        y_hot = np.unique(y)
+        for indx in range(0, len(y_hot)):
+            if y_hot[indx] != singleY[0]:
+                y_hot[indx] = 0
+            else:
+                y_hot[indx] = 1
+        return y_hot
+
     def fit(self, X, y, initial_weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
 
@@ -43,6 +54,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
 
         """
+        ## INITIALIZATIONS
+
         if self.weights is None:
             self.weights = self.initialize_weights(X,y)
         print("INITIAL WEIGHTS")
@@ -52,31 +65,36 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         print("INITIALIZATION NETWORK")
         print(networkObject)
 
+        lastDeltaWeight = []
+        numberOfEpochWithNoImprovement = [];
         ##Make the validation and training sets ###
         X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
-        lastDeltaWeight = []
-
-        # X_shuffled,y_shuffled = self._shuffle_data(X,y)
+        biasArray = np.full((X_train.shape[0],1),1)
         # biasArray = np.full((X.shape[0],1),1)
 
-        # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
-        # biasArray = np.full((X_train.shape[0],1),1)
-        X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+        while len(numberOfEpochWithNoImprovement) < self.deterministic:
 
-        self._forwardProp(X_bias[0],networkObject)
-        print("FORWARD PROPAGATION")
-        print(networkObject)
+            X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
+            # X_shuffled,y_shuffled = self._shuffle_data(X,y)
+            X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
+            for x_unit,label_unit in zip(X_bias, y_shuffled):
+                ## MAKE Y HOT PLATE ##
+                target = self._making_y_hot(y_shuffled,label_unit)
 
-        print("BACKWARD PROPAGATION")
-        weights_change_array = self._backwardProp(networkObject, y[0][0],X_bias[0])
-        print(weights_change_array)
+                ##FORWARD PROPAGATION ##
+                self._forwardProp(x_unit,networkObject)
+                # print("FORWARD PROPAGATION")
+                # print(networkObject)
 
-        print("NEW WEIGHTS")
-        self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
-        lastDeltaWeight = weights_change_array
-        print(networkObject)
-        # print(self.weights)
-
+                #BACKWARD PROPAGATION WITH MOMENTUM ##
+                weights_change_array = self._backwardProp(networkObject,target,x_unit)
+                # print("BACKWARD PROPAGATION")
+                # print(weights_change_array)
+                self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
+                lastDeltaWeight = weights_change_array
+                # print("NEW WEIGHTS")
+                # print(networkObject)
+            break
         return self
 
     def predict(self, X):
@@ -296,7 +314,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                     o = self._activate_node(network[indxLayer][indxNode]['net'])
                     # print("output ", o)
                     o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
-                    desv = round((target - o) * o_dev,5)
+                    desv = round((target[indxNode] - o) * o_dev,5)
                     # print("desv value ", desv)
                     desv_layer.append(desv)
                     node_weight_change = []
