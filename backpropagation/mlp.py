@@ -69,13 +69,13 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         numberOfEpochWithNoImprovement = [];
         ##Make the validation and training sets ###
         X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
-        biasArray = np.full((X_train.shape[0],1),1)
-        # biasArray = np.full((X.shape[0],1),1)
+        # biasArray = np.full((X_train.shape[0],1),1)
+        biasArray = np.full((X.shape[0],1),1)
 
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
 
-            X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
-            # X_shuffled,y_shuffled = self._shuffle_data(X,y)
+            # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
+            X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
             for x_unit,label_unit in zip(X_bias, y_shuffled):
                 ## MAKE Y HOT PLATE ##
@@ -83,19 +83,28 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
                 ##FORWARD PROPAGATION ##
                 self._forwardProp(x_unit,networkObject)
-                # print("FORWARD PROPAGATION")
-                # print(networkObject)
+                print("FORWARD PROPAGATION")
+                print(networkObject)
 
                 #BACKWARD PROPAGATION WITH MOMENTUM ##
                 weights_change_array = self._backwardProp(networkObject,target,x_unit)
-                # print("BACKWARD PROPAGATION")
-                # print(weights_change_array)
+                print("BACKWARD PROPAGATION")
+                print(weights_change_array)
                 self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
                 lastDeltaWeight = weights_change_array
-                # print("NEW WEIGHTS")
-                # print(networkObject)
+                print("NEW WEIGHTS")
+                print(networkObject)
+                # break
+            ## Calculate MSE for improvement ###
+
             break
         return self
+
+    def _getMSE(self, outputs, targets):
+        errors = np.subtract(targets,outputs)
+        errors_squared = np.square(errors)
+        mse = np.sum(errors_squared)
+        return mse
 
     def predict(self, X):
         """ Predict all classes for a dataset X
@@ -381,7 +390,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 weights_original = np.array(network[indxLayer][indxNode]['weights'])
                 weights_change = np.array(Deltaweights[indxLayer][indxNode])
                 if len(lastDeltaweights) > 0:
-                    print("fasfsaf")
                     last_weights_change = np.array(lastDeltaweights[indxLayer][indxNode]) * self.momentum
                     weights_change_momentum = np.add(weights_change, last_weights_change)
                     weights_updated = np.add(weights_original, weights_change_momentum)
