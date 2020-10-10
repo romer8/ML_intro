@@ -45,9 +45,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         if self.weights is None:
             self.weights = self.initialize_weights(X,y)
-
+        print("INITIAL WEIGHTS")
+        print(self.weights)
         #Initialize network ##
         networkObject = self._initialize_network()
+        print("INITIALIZATION NETWORK")
+        print(networkObject)
         ## make an if statement to stop it
 
         X_shuffled,y_shuffled = self._shuffle_data(X,y)
@@ -59,7 +62,13 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         #
         # print("forward")
         self._forwardProp(X_bias[0],networkObject)
+        print("FORWARD PROPAGATION")
         print(networkObject)
+        print("BACKWARD PROPAGATION")
+
+        weights_change_array = self._backwardProp(networkObject, y[0][0],X_bias[0])
+        print(weights_change_array)
+        # print(self.weights)
 
         return self
 
@@ -84,34 +93,34 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         networkWeights = []
         sizeWidthInputs = len(X[0]) + 1
         sizeWidthOutputs = len(np.unique(y))
-        # unique, counts = np.unique(x, return_counts=True)
-        sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
-        randomValue = 1 # random.uniform(0 , 0.00001)
+        # sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
+        sizeWidthHiddenLayersDefault = len(X[0]) * 2
+        randomValue = round(1,5) # random.uniform(0 , 0.00001)
         if self.hidden_layer_widths is None:
             hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(sizeWidthHiddenLayersDefault)]
-            # print(hidden_layer)
             networkWeights.append(hidden_layer)
 
         else:
             sizeWidthHiddenLayersCustomized = self.hidden_layer_widths[0]
             for hiddenNodeIndx in range (0, len(self.hidden_layer_widths)):
                 if hiddenNodeIndx < 1:
-                    hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    # hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(self.hidden_layer_widths[hiddenNodeIndx])]
                     networkWeights.append(hidden_layer)
                     # print(hidden_layer)
                 else:
-                    hidden_layer = [{'weights':[randomValue for i in range(self.hidden_layer_widths[hiddenNodeIndx-1] +1 )]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    # hidden_layer = [{'weights':[randomValue for i in range(self.hidden_layer_widths[hiddenNodeIndx-1] +1 )]} for j in range(self.hidden_layer_widths[hiddenNodeIndx] + 1)]
+                    hidden_layer = [{'weights':[randomValue for i in range(self.hidden_layer_widths[hiddenNodeIndx-1] + 1 )]} for j in range(self.hidden_layer_widths[hiddenNodeIndx])]
                     networkWeights.append(hidden_layer)
 
 
         ##Output Weights ##
-        last_hidden_layer_width = len(networkWeights[-1])
+        # last_hidden_layer_width = len(networkWeights[-1])
+        last_hidden_layer_width = len(networkWeights[-1]) + 1
         output_layer = [{'weights':[randomValue for i in range(last_hidden_layer_width)]} for j in range(sizeWidthOutputs)]
         networkWeights.append(output_layer)
 
 
-        # print(len(networkWeights))
-        print(networkWeights)
         return networkWeights
 
     def score(self, X, y):
@@ -155,33 +164,38 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         for layerIndx in range(0, len(self.weights)):
             layer = []
-            if layerIndx < len(self.weights) - 1:
-                for nodeIndx in range(0, len(self.weights[layerIndx])):
-                    if nodeIndx < len(self.weights[layerIndx]) - 1:
-                        node = {
-                            "net":0,
-                            "weights":self.weights[layerIndx][nodeIndx]['weights']
-                        }
-                        layer.append(node)
-                    else:
-                        node = {
-                            "net":1,
-                            "weights":self.weights[layerIndx][nodeIndx]['weights']
-                        }
-                        layer.append(node)
-            else:
-                for nodeIndx in range(0, len(self.weights[layerIndx])):
-                    node = {
-                        "net":0,
-                            "weights":self.weights[layerIndx][nodeIndx]['weights']
-                    }
-                    layer.append(node)
+            # if layerIndx < len(self.weights) - 1:
+            #     for nodeIndx in range(0, len(self.weights[layerIndx])):
+            #         if nodeIndx < len(self.weights[layerIndx]) - 1:
+            #             node = {
+            #                 "net":0,
+            #                 "weights":self.weights[layerIndx][nodeIndx]['weights']
+            #             }
+            #             layer.append(node)
+            #         else:
+            #             node = {
+            #                 "net":1,
+            #                 "weights":self.weights[layerIndx][nodeIndx]['weights']
+            #             }
+            #             layer.append(node)
+            # else:
+            for nodeIndx in range(0, len(self.weights[layerIndx])):
+                node = {
+                    "net":0,
+                    "weights":self.weights[layerIndx][nodeIndx]['weights']
+                }
+                layer.append(node)
 
             network.append(layer)
-        print(network)
         # print(len(network))
         return network
+    """Get all the weights for a layer"""
+    def _getWeightsLayer(self,layer,indx):
+        weights = []
+        for node in layer:
+            weights.append(node['weights'][indx])
 
+        return np.array(weights)
 
     """Get all the net values from a layer"""
 
@@ -193,11 +207,13 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     """Get all the output values from a layer"""
 
-    def _getOutputValuesLayer(self,layer):
+    def _getOutputValuesLayer(self,layer, isOutput):
         outputs = []
         for node in layer:
             outputs.append(self._activate_node(node['net']))
-        outputs[-1] = 1
+        if isOutput == False:
+            outputs.append(1)
+            # outputs[-1] = 1
         return np.array(outputs)
 
     """ Get the net value for a node
@@ -208,7 +224,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     def _get_net_node(self,Input,w):
         # print(np.dot(w,Input))
-        return np.dot(w,Input)
+        return round(np.dot(w,Input),5)
 
     """ Activate the node function
     X = 2d numpy array
@@ -216,74 +232,118 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     return float
     """
     def _activate_node(self,net):
-        return (1/(1 + math.exp(-net)))
+        return round(1/(1 + math.exp(-net)),5)
 
     """ Derivative of Activation function
     net = float
     return float
     """
     def _activate_node_derivative(self, net):
-        return _activate_node(net) * (1-_activate_node(net))
+        return round(self._activate_node(net) * (1 - self._activate_node(net)),5)
 
     """ Fordward Propagation of the Network"""
     def _forwardProp(self, inputs, network):
         inputForForward = inputs
         for indxLayer in range(0, len(network)):
-            print(inputForForward)
-            if indxLayer < len(network) - 1:
+            # if indxLayer < len(network) - 1:
+            #     for indxNode in range(0, len(network[indxLayer])):
+            #         if indxNode < len(network[indxLayer]) - 1:
+            #             weight_np = np.array(network[indxLayer][indxNode]['weights'])
+            #             # print(weight_np)
+            #             # print(inputForForward)
+            #             n = self._get_net_node(inputForForward, weight_np)
+            #             network[indxLayer][indxNode]['net'] = n
+            # else:
+            for indxNode in range(0, len(network[indxLayer])):
+                weight_np = np.array(network[indxLayer][indxNode]['weights'])
+                # print(weight_np)
+                # print(inputForForward)
+                n = self._get_net_node(inputForForward, weight_np)
+                network[indxLayer][indxNode]['net'] = n
+
+            inputForForward = self._getOutputValuesLayer(network[indxLayer],False)
+
+    def _backwardProp(self, network, target, input):
+        desv_network = []
+        weight_change_network = []
+        print ("length Network ",len(network) )
+        for indxLayer in range(len(network)-1 , -1, -1):
+            desv_layer = []
+            print("Layer # ",indxLayer)
+            layer_weight_change = []
+
+            if indxLayer == len(network) -1:
+                print("OUTPUT LAYER")
+
                 for indxNode in range(0, len(network[indxLayer])):
-                    if indxNode < len(network[indxLayer]) - 1:
-                        weight_np = np.array(network[indxLayer][indxNode]['weights'])
-                        # print(weight_np)
-                        # print(inputForForward)
-                        n = self._get_net_node(inputForForward, weight_np)
-                        network[indxLayer][indxNode]['net'] = n
+                    print("Node # ",indxNode)
+
+                    o = self._activate_node(network[indxLayer][indxNode]['net'])
+                    print("output ", o)
+                    o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
+                    desv = round((target - o) * o_dev,5)
+                    print("desv value ", desv)
+                    desv_layer.append(desv)
+                    node_weight_change = []
+                    outputsNextLayer = self._getOutputValuesLayer(network[indxLayer - 1], False)
+                    for indxOutputs in outputsNextLayer:
+                        changeW = round(self.lr * desv * indxOutputs,5)
+                        node_weight_change.append(changeW)
+
+                    layer_weight_change.append(node_weight_change)
+
+                weight_change_network.append(layer_weight_change)
+                print("first layer weigh change")
+                print(layer_weight_change)
+                desv_network.append(desv_layer)
+                    # print(desv_layer)
             else:
+                print("HIDDEN LAYER")
+                # print(len(network[indxLayer]))
+                o = 1
+                o_dev = 1
+                desv_layer_temp = []
+                layer_weight_change = []
+                print("this is the desv layer")
+                print(desv_network[-1])
+
+                outputsNextLayer = np.array([])
+                if indxLayer > 0:
+                    outputsNextLayer = self._getOutputValuesLayer(network[indxLayer - 1], False)
+                else:
+                    outputsNextLayer = input
+                print("these are the outputs")
+                print(outputsNextLayer)
                 for indxNode in range(0, len(network[indxLayer])):
-                    weight_np = np.array(network[indxLayer][indxNode]['weights'])
-                    # print(weight_np)
-                    # print(inputForForward)
-                    n = self._get_net_node(inputForForward, weight_np)
-                    network[indxLayer][indxNode]['net'] = n
+                    print("Node # ",indxNode)
+                    o = self._activate_node(network[indxLayer][indxNode]['net'])
+                    o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
+                    node_weight_change = []
+                    weightsToUse = self._getWeightsLayer(network[indxLayer + 1],indxNode)
+                    print("this are the weights ", weightsToUse)
 
-            inputForForward = self._getOutputValuesLayer(network[indxLayer])
+                    weight_desv = np.dot(np.array(desv_network[-1]), weightsToUse)
+                    print("this is the dot product ", weight_desv)
+                    desv = round(weight_desv * o_dev,5)
+                    print("desv value ", desv)
 
-
-        # j = 1
-        # for layer in network:
-        #     i = 1
-        #     for node in layer:
-        #         if i < len(layer) and j < len(network): ## safe guard for the bias node in the layer
-        #             n = self._get_net_node(node['weight'], inputForForward)
-        #             node['net'] = n
-        #             i = i + 1
-        #     # print(layer)
-        #     inputForForward = self._getNetValuesLayer(layer)
-        #     j = j + 1
-
-        return network
-
-    ## General Nodes Equations
-    def _change_weight_generalOutput_node(self,c,output,target):
-        change_delta = (target - _output_node(net)) * _output_node_derivative(_output_node(net))
-        return change_delta
-
-    ## Hidden Nodes Equations ##
-    def _change_weight_hidden_node(self,c,net,delta,weight):
-        change_delta = c * _output_node(net) * delta * weight * _output_node_derivative(_output_node(net))
-        return change_delta
-    ## shared Equations ##
+                    desv_layer_temp.append(desv)
 
 
 
-    def  _get_Change_hidden_node(self, X, W, isHidden):
-        net = _get_net(X,W)
-        output = _output_node(net)
-        outputDerivative = _output_node_derivative(net)
-        # if isHidden:
-        #     for
+                    for indxOutputs in outputsNextLayer:
+                        changeW = round(self.lr * desv * indxOutputs,5)
+                        node_weight_change.append(changeW)
 
-        return 0
+                    layer_weight_change.append(node_weight_change)
+                print("this is the layer weight change ")
+                print(layer_weight_change)
+                weight_change_network.append(layer_weight_change)
+                desv_layer = desv_layer_temp
+                desv_network.append(desv_layer)
+
+        return weight_change_network
+
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
         pass
