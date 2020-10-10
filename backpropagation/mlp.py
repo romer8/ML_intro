@@ -64,10 +64,14 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self._forwardProp(X_bias[0],networkObject)
         print("FORWARD PROPAGATION")
         print(networkObject)
-        print("BACKWARD PROPAGATION")
 
+        print("BACKWARD PROPAGATION")
         weights_change_array = self._backwardProp(networkObject, y[0][0],X_bias[0])
         print(weights_change_array)
+
+        print("NEW WEIGHTS")
+        self._updtate_weights(networkObject, weights_change_array)
+        print(networkObject)
         # print(self.weights)
 
         return self
@@ -266,23 +270,23 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     def _backwardProp(self, network, target, input):
         desv_network = []
         weight_change_network = []
-        print ("length Network ",len(network) )
+        # print ("length Network ",len(network) )
         for indxLayer in range(len(network)-1 , -1, -1):
             desv_layer = []
-            print("Layer # ",indxLayer)
+            # print("Layer # ",indxLayer)
             layer_weight_change = []
 
             if indxLayer == len(network) -1:
-                print("OUTPUT LAYER")
+                # print("OUTPUT LAYER")
 
                 for indxNode in range(0, len(network[indxLayer])):
-                    print("Node # ",indxNode)
+                    # print("Node # ",indxNode)
 
                     o = self._activate_node(network[indxLayer][indxNode]['net'])
-                    print("output ", o)
+                    # print("output ", o)
                     o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
                     desv = round((target - o) * o_dev,5)
-                    print("desv value ", desv)
+                    # print("desv value ", desv)
                     desv_layer.append(desv)
                     node_weight_change = []
                     outputsNextLayer = self._getOutputValuesLayer(network[indxLayer - 1], False)
@@ -293,56 +297,64 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                     layer_weight_change.append(node_weight_change)
 
                 weight_change_network.append(layer_weight_change)
-                print("first layer weigh change")
-                print(layer_weight_change)
+                # print("first layer weigh change")
+                # print(layer_weight_change)
                 desv_network.append(desv_layer)
-                    # print(desv_layer)
             else:
-                print("HIDDEN LAYER")
-                # print(len(network[indxLayer]))
+                # print("HIDDEN LAYER")
                 o = 1
                 o_dev = 1
                 desv_layer_temp = []
                 layer_weight_change = []
-                print("this is the desv layer")
-                print(desv_network[-1])
+                # print("this is the desv layer")
+                # print(desv_network[-1])
 
                 outputsNextLayer = np.array([])
                 if indxLayer > 0:
                     outputsNextLayer = self._getOutputValuesLayer(network[indxLayer - 1], False)
                 else:
                     outputsNextLayer = input
-                print("these are the outputs")
-                print(outputsNextLayer)
+                # print("these are the outputs")
+                # print(outputsNextLayer)
                 for indxNode in range(0, len(network[indxLayer])):
-                    print("Node # ",indxNode)
+                    # print("Node # ",indxNode)
                     o = self._activate_node(network[indxLayer][indxNode]['net'])
                     o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
                     node_weight_change = []
                     weightsToUse = self._getWeightsLayer(network[indxLayer + 1],indxNode)
-                    print("this are the weights ", weightsToUse)
+                    # print("this are the weights ", weightsToUse)
 
                     weight_desv = np.dot(np.array(desv_network[-1]), weightsToUse)
-                    print("this is the dot product ", weight_desv)
+                    # print("this is the dot product ", weight_desv)
                     desv = round(weight_desv * o_dev,5)
-                    print("desv value ", desv)
+                    # print("desv value ", desv)
 
                     desv_layer_temp.append(desv)
-
-
-
                     for indxOutputs in outputsNextLayer:
                         changeW = round(self.lr * desv * indxOutputs,5)
                         node_weight_change.append(changeW)
 
                     layer_weight_change.append(node_weight_change)
-                print("this is the layer weight change ")
-                print(layer_weight_change)
+                # print("this is the layer weight change ")
+                # print(layer_weight_change)
                 weight_change_network.append(layer_weight_change)
                 desv_layer = desv_layer_temp
                 desv_network.append(desv_layer)
 
+        ## reversed the list
+        weight_change_network.reverse()
         return weight_change_network
+
+    def _updtate_weights(self,network, Deltaweights):
+
+        for indxLayer in range(0, len(network)):
+            for indxNode in range(0, len(network[indxLayer])):
+                weights_original = np.array(network[indxLayer][indxNode]['weights'])
+                weights_change = np.array(Deltaweights[indxLayer][indxNode])
+                weights_updated = np.add(weights_original, weights_change)
+                network[indxLayer][indxNode]['weights'] = list(weights_updated)
+
+        return network
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
