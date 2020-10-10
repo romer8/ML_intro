@@ -2,7 +2,7 @@ import numpy as np
 import math
 import random
 from sklearn.base import BaseEstimator, ClassifierMixin
-
+from sklearn.model_selection import train_test_split
 ### NOTE: The only methods you are required to have are:
 #   * predict
 #   * fit
@@ -51,16 +51,18 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         networkObject = self._initialize_network()
         print("INITIALIZATION NETWORK")
         print(networkObject)
-        ## make an if statement to stop it
 
-        X_shuffled,y_shuffled = self._shuffle_data(X,y)
-        biasArray = np.full((X.shape[0],1),1)
+        ##Make the validation and training sets ###
+        X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
+        lastDeltaWeight = []
+
+        # X_shuffled,y_shuffled = self._shuffle_data(X,y)
+        # biasArray = np.full((X.shape[0],1),1)
+
+        # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
+        # biasArray = np.full((X_train.shape[0],1),1)
         X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
-        # ### Initialize the network and print###
-        # print("network Initialization")
-        # print(networkObject)
-        #
-        # print("forward")
+
         self._forwardProp(X_bias[0],networkObject)
         print("FORWARD PROPAGATION")
         print(networkObject)
@@ -70,7 +72,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         print(weights_change_array)
 
         print("NEW WEIGHTS")
-        self._updtate_weights(networkObject, weights_change_array)
+        self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
+        lastDeltaWeight = weights_change_array
         print(networkObject)
         # print(self.weights)
 
@@ -159,7 +162,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     """ Split data into validation and trainingSets"""
     def _getValidationAndTrain(self,X,y,valSize,isShuffle):
-         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, shuffle = isShuffle) # 0.25 x 0.8 = 0.2
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, shuffle = isShuffle) # 0.25 x 0.8 = 0.2
         return  X_train, X_val, y_train, y_val
 
     """ Split data into training and validation"""
@@ -353,14 +356,21 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         weight_change_network.reverse()
         return weight_change_network
 
-    def _updtate_weights(self,network, Deltaweights):
+    def _updtate_weights(self,network, Deltaweights,lastDeltaweights):
 
         for indxLayer in range(0, len(network)):
             for indxNode in range(0, len(network[indxLayer])):
                 weights_original = np.array(network[indxLayer][indxNode]['weights'])
                 weights_change = np.array(Deltaweights[indxLayer][indxNode])
-                weights_updated = np.add(weights_original, weights_change)
-                network[indxLayer][indxNode]['weights'] = list(weights_updated)
+                if len(lastDeltaweights) > 0:
+                    print("fasfsaf")
+                    last_weights_change = np.array(lastDeltaweights[indxLayer][indxNode]) * self.momentum
+                    weights_change_momentum = np.add(weights_change, last_weights_change)
+                    weights_updated = np.add(weights_original, weights_change_momentum)
+                    network[indxLayer][indxNode]['weights'] = list(weights_updated)
+                else:
+                    weights_updated = np.add(weights_original, weights_change)
+                    network[indxLayer][indxNode]['weights'] = list(weights_updated)
 
         return network
 
