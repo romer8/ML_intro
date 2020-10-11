@@ -83,7 +83,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             for x_unit,label_unit in zip(X_bias, y_shuffled):
                 ## MAKE Y HOT PLATE ##
                 target = self._making_y_hot(classesY,label_unit)
-                print("target" , target)
                 ##FORWARD PROPAGATION ##
                 self._forwardProp(x_unit,networkObject)
                 print("FORWARD PROPAGATION")
@@ -117,6 +116,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     def _get_mse_valSet(self,Xval,yVal):
         mse_instances = np.array([])
+        print("val set ")
+        print(self.weights)
         networkObject = self._initialize_network()
         biasArray = np.full((Xval.shape[0],1),1)
         X_bias = np.concatenate((Xval,biasArray),axis=1)
@@ -149,7 +150,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         for layer in network:
             weights_layer = []
             for node in layer:
-                w = node['weights']
+                w = {"weights": node['weights']}
                 weights_layer.append(w)
             weights_network.append(weights_layer)
 
