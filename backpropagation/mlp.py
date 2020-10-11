@@ -81,9 +81,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         else:
             X_train = X
             y_train = y
-            
-        print("PERCENTAGE VAL SIZE", self.validation_size)
-        print("validation set ", X_val)
 
         biasArray = np.full((X_train.shape[0],1),1)
         # biasArray = np.full((X.shape[0],1),1)
@@ -91,6 +88,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
             self.numberOfEpochs = self.numberOfEpochs + 1
             print("EPOCH NUMBER ",self.numberOfEpochs)
+            print(self.weights)
             X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
             # X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
@@ -315,21 +313,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         for layerIndx in range(0, len(self.weights)):
             layer = []
-            # if layerIndx < len(self.weights) - 1:
-            #     for nodeIndx in range(0, len(self.weights[layerIndx])):
-            #         if nodeIndx < len(self.weights[layerIndx]) - 1:
-            #             node = {
-            #                 "net":0,
-            #                 "weights":self.weights[layerIndx][nodeIndx]['weights']
-            #             }
-            #             layer.append(node)
-            #         else:
-            #             node = {
-            #                 "net":1,
-            #                 "weights":self.weights[layerIndx][nodeIndx]['weights']
-            #             }
-            #             layer.append(node)
-            # else:
             for nodeIndx in range(0, len(self.weights[layerIndx])):
                 node = {
                     "net":0,

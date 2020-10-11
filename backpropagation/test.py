@@ -33,5 +33,6 @@ BClass = mlp.MLPClassifier(lr = LR,momentum = MOMENTUM, shuffle = SHUFFLE, deter
 # testArrayY = np.array([[1],[0]])
 # BClass.fit(testArray,testArrayY)
 BClass.fit(data,labels)
-print(BClass.get_weights())
+# print("")
+# print(BClass.get_weights())
 list2csv.write_to_csv(BClass.get_weights())
