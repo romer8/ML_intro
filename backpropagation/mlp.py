@@ -33,8 +33,9 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     """makes a numpy hot plate array for the labels"""
 
-    def _making_y_hot(self,y, singleY):
-        y_hot = np.unique(y)
+    def _making_y_hot(self,y_hot, singleY):
+        # y_hot = np.unique(y)
+        # print(y_hot)
         for indx in range(0, len(y_hot)):
             if y_hot[indx] != singleY[0]:
                 y_hot[indx] = 0
@@ -67,20 +68,22 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         lastDeltaWeight = []
         numberOfEpochWithNoImprovement = [];
+        classesY = np.unique(y)
+
         ##Make the validation and training sets ###
         X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
         biasArray = np.full((X_train.shape[0],1),1)
         # biasArray = np.full((X.shape[0],1),1)
         bestMSEsoFar = 1000
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
-            # X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
-            X_shuffled,y_shuffled = self._shuffle_data(X,y)
+            X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
+            # X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
             mse_instances = np.array([])
             for x_unit,label_unit in zip(X_bias, y_shuffled):
                 ## MAKE Y HOT PLATE ##
-                target = self._making_y_hot(y_shuffled,label_unit)
-
+                target = self._making_y_hot(classesY,label_unit)
+                print("target" , target)
                 ##FORWARD PROPAGATION ##
                 self._forwardProp(x_unit,networkObject)
                 print("FORWARD PROPAGATION")
@@ -110,7 +113,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             break
         return self
 
-""" Function to retrieve the mean instance MSE """"
+    """ Function to retrieve the mean instance MSE """
 
     def _get_mse_valSet(self,Xval,yVal):
         mse_instances = np.array([])
@@ -121,7 +124,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         for x_unit,label_unit in zip(X_bias, yVal):
             target = self._making_y_hot(yVal,label_unit)
             self._forwardProp(x_unit,networkObject)
-            outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True):
+            outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True)
             mse = self._getMSE(outputs_outputLayer,target)
             mse_instances.append(mse)
 
@@ -129,7 +132,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         mean_mse = np.mean(mse_instances)
         return mean_mse
 
-    """ Function that increases or not the numberOf Epochs with no improvement""""
+    """ Function that increases or not the numberOf Epochs with no improvement"""
     def _increaseNumberOfEpochWithNoImprovement(self,bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement):
         if abs(bestMSEsoFar - mean_mse) < 0.015:
             numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
@@ -245,13 +248,19 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         """
         outputs = self.predict(X)
         y_hot_encoding = np.array([])
-        matches = 0
+        matches = []
         for y_unit in y:
             y_hot = self._making_y_hot(self,y,y_unit)
             y_hot_encoding.append(y_hot)
-        
 
-        return 0
+        for y_hot_unit, output in zip(y_hot_encoding, outputs):
+            isTheSame = np.array_equal(y_hot_unit, output)
+            if isTheSame == True:
+                matches.append(isTheSame)
+
+        accuracy_porcetange = len(matches)/len(y_hot_encoding)
+
+        return accuracy_porcetange
 
     def _shuffle_data(self, X, y):
         """ Shuffle the data! This _ prefix suggests that this method should only be called internally.
