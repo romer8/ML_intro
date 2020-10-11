@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None,weights = None):
+    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None,weights = None,validationSize = None):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -30,6 +30,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.momentum = momentum
         self.shuffle = shuffle
         self.deterministic = deterministic
+        self.validation_size = validationSize
 
     """makes a numpy hot plate array for the labels"""
 
@@ -116,8 +117,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     def _get_mse_valSet(self,Xval,yVal):
         mse_instances = np.array([])
-        print("val set ")
-        print(self.weights)
+
         networkObject = self._initialize_network()
         biasArray = np.full((Xval.shape[0],1),1)
         X_bias = np.concatenate((Xval,biasArray),axis=1)
@@ -127,9 +127,10 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             self._forwardProp(x_unit,networkObject)
             outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True)
             mse = self._getMSE(outputs_outputLayer,target)
-            mse_instances.append(mse)
+            mse_instances = np.append(mse_instances,mse)
 
         ### CALCULATING THE MEAN MSE FOR THE EPOCH
+        print("print", mse_instances)
         mean_mse = np.mean(mse_instances)
         return mean_mse
 
@@ -208,7 +209,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         sizeWidthOutputs = len(np.unique(y))
         # sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
         sizeWidthHiddenLayersDefault = len(X[0]) * 2
-        randomValue = round(1,5) # random.uniform(0 , 0.00001)
+        randomValue = round(0,5) # random.uniform(0 , 0.00001)
         if self.hidden_layer_widths is None:
             hidden_layer = [{'weights':[randomValue for i in range(sizeWidthInputs)]} for j in range(sizeWidthHiddenLayersDefault)]
             networkWeights.append(hidden_layer)
