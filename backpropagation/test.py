@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import random
 ## change Path ##
-sys.path.append("/home/elkin/university/gradSchool/Fall202/CS472/CS472")
+sys.path.append("/home/elkin/university/gradSchool/Fall2020/CS472/CS472")
 from tools import arff, splitData, generatePerceptronData, graph_tools,list2csv
 import itertools
 import mlp
