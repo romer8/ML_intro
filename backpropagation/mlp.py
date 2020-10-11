@@ -166,7 +166,30 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             array, shape (n_samples,)
                 Predicted target values per element in X.
         """
-        pass
+        outputs = np.array([])
+        networkObject = self._initialize_network()
+        biasArray = np.full((X.shape[0],1),1)
+        X_bias = np.concatenate((X,biasArray),axis=1)
+
+        for x_unit in X_bias:
+            self._forwardProp(x_unit,networkObject)
+            outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True)
+            outputs_outputLayer_transformed = self._convertOutputToHotEncoding(outputs_outputLayer)
+            outputs.append(outputs_outputLayer_transformed)
+
+        return outputs
+
+    """ Function to retrieve the converted hot encoding output"""
+
+    def _convertOutputToHotEncoding(self, outputs):
+        hot_encoding = np.array([])
+        maxVal = np.amax(outputs)
+        for output in outputs:
+            if output < maxVal:
+                hot_encoding.append(0)
+            else:
+                hot_encoding.append(1)
+        return hot_encoding
 
     def initialize_weights(self,X,y):
         """ Initialize weights for perceptron. Don't forget the bias!
@@ -220,6 +243,13 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             score : float
                 Mean accuracy of self.predict(X) wrt. y.
         """
+        outputs = self.predict(X)
+        y_hot_encoding = np.array([])
+        matches = 0
+        for y_unit in y:
+            y_hot = self._making_y_hot(self,y,y_unit)
+            y_hot_encoding.append(y_hot)
+        
 
         return 0
 
