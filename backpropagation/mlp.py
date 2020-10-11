@@ -31,7 +31,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.shuffle = shuffle
         self.deterministic = deterministic
         self.validation_size = validationSize
-
+        self.numberOfEpochs = 0
     """makes a numpy hot plate array for the labels"""
 
     def _making_y_hot(self,y_hot, singleY):
@@ -72,11 +72,25 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         classesY = np.unique(y)
 
         ##Make the validation and training sets ###
-        X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,0.20,True)
+        y_train = np.array([])
+        y_val = np.array([])
+        X_train = np.array([])
+        X_val = np.array([])
+        if self.validation_size > 0:
+            X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,self.validation_size,True)
+        else:
+            X_train = X
+            y_train = y
+            
+        print("PERCENTAGE VAL SIZE", self.validation_size)
+        print("validation set ", X_val)
+
         biasArray = np.full((X_train.shape[0],1),1)
         # biasArray = np.full((X.shape[0],1),1)
         bestMSEsoFar = 1000
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
+            self.numberOfEpochs = self.numberOfEpochs + 1
+            print("EPOCH NUMBER ",self.numberOfEpochs)
             X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
             # X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
@@ -86,31 +100,32 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 target = self._making_y_hot(classesY,label_unit)
                 ##FORWARD PROPAGATION ##
                 self._forwardProp(x_unit,networkObject)
-                print("FORWARD PROPAGATION")
-                print(networkObject)
+                # print("FORWARD PROPAGATION")
+                # print(networkObject)
 
                 #BACKWARD PROPAGATION WITH MOMENTUM ##
                 weights_change_array = self._backwardProp(networkObject,target,x_unit)
-                print("BACKWARD PROPAGATION")
-                print(weights_change_array)
+                # print("BACKWARD PROPAGATION")
+                # print(weights_change_array)
                 self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
                 lastDeltaWeight = weights_change_array
-                print("NEW WEIGHTS")
-                print(networkObject)
+                # print("NEW WEIGHTS")
+                # print(networkObject)
                 # break
             ##UPDATE THE WEIGHTS TO THE LAST MLP WEIGHTS ##
             self.weights = self._getWeights_from_network(networkObject)
 
             ### CALCULATING THE MEAN MSE FOR THE VALIDATION SET
-            mean_mse = self._get_mse_valSet(X_val,y_val)
-            if mean_mse < 0.000001:
-                break
+            if self.validation_size > 0:
+                mean_mse = self._get_mse_valSet(X_val,y_val)
+                if mean_mse < 0.000001:
+                    break
 
-            self._increaseNumberOfEpochWithNoImprovement(bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement)
+                self._increaseNumberOfEpochWithNoImprovement(bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement)
+            else:
+                numberOfEpochWithNoImprovement.append(1)
 
-
-
-            break
+            # break
         return self
 
     """ Function to retrieve the mean instance MSE """
@@ -130,7 +145,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             mse_instances = np.append(mse_instances,mse)
 
         ### CALCULATING THE MEAN MSE FOR THE EPOCH
-        print("print", mse_instances)
+        print("MSE INSTANCES ", mse_instances)
         mean_mse = np.mean(mse_instances)
         return mean_mse
 
@@ -282,7 +297,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     """ Split data into validation and trainingSets"""
     def _getValidationAndTrain(self,X,y,valSize,isShuffle):
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, shuffle = isShuffle) # 0.25 x 0.8 = 0.2
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=valSize, shuffle = isShuffle) # 0.25 x 0.8 = 0.2
         return  X_train, X_val, y_train, y_val
 
     """ Split data into training and validation"""
