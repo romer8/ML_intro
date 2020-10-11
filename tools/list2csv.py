@@ -15,9 +15,9 @@ def get_weights_list_format(weights):
 def write_to_csv(weights):
     network = get_weights_list_format(weights)
     with open("weights.csv", "w", newline="") as f:
-        for layer in network:
-            for node in layer:
-                for weight in node:
+        for indxLayer in range(len(network)-1 , -1, -1):
+            for indxNode in range(len(network[indxLayer])-1 , -1, -1):
+                for weight in network[indxLayer][indxNode]:
                     f.write(str(weight))
                     f.write('\n')
     pass
