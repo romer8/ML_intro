@@ -3,6 +3,7 @@ import math
 import random
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 ### NOTE: The only methods you are required to have are:
 #   * predict
 #   * fit
@@ -12,7 +13,7 @@ from sklearn.model_selection import train_test_split
 
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None,weights = None,validationSize = None, allWeightsValue = None):
+    def __init__(self,lr=.1, momentum=0, shuffle=True,deterministic= 10,hidden_layer_widths=None,weights = None,validationSize = None, allWeightsValue = None, isHotEncoding = True):
         """ Initialize class with chosen hyperparameters.
 
         Args:
@@ -33,8 +34,10 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.validation_size = validationSize
         self.numberOfEpochs = 0
         self.allWeightsValue = allWeightsValue
-        self.mse_epochs = []
-        self.accuracy_epochs = []
+        self.mse_val_epochs = []
+        self.mse_training_epochs =[]
+        self.accuracy_epochs_val = []
+        self.isHotEncoding = isHotEncoding
     """makes a numpy hot plate array for the labels"""
 
     def _making_y_hot(self,y_hot, singleY):
@@ -67,32 +70,58 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         # print(self.weights)
         #Initialize network ##
         networkObject = self._initialize_network()
+        # networkObject = [[{'net': 0.0, 'weights': [0.1, 0.2, -0.1]}, {'net': 0.0, 'weights': [-0.2, 0.3, -0.3]}, {'net': 0.0, 'weights': [0.1, 0.2, -0.3]},
+        #                   {'net': 0.0, 'weights': [0.2, -0.1, 0.3]}], [{'net': 0.0, 'weights': [0.2, -0.1, 0.3]}, {'net': 0.0, 'weights': [0.1, -0.2, -0.3]}]]
+
+
         # print("INITIALIZATION NETWORK")
         # print(networkObject)
 
-        lastDeltaWeight = []
+        lastDeltaWeight = self._getListWeights_from_network(networkObject)
         numberOfEpochWithNoImprovement = [];
         classesY = np.unique(y)
-
+        print("classes" , classesY)
         ##Make the validation and training sets ###
         y_train = np.array([])
+        y_train_copy = np.array([])
         y_val = np.array([])
+        y_val_copy = np.array([])
         X_train = np.array([])
         X_val = np.array([])
+        enc = OneHotEncoder()
         if self.validation_size > 0:
             X_train, X_val, y_train, y_val = self._getValidationAndTrain(X,y,self.validation_size,True)
+            y_train_copy = y_train.copy()
+            y_val_copy = y_val.copy()
+            if self.isHotEncoding:
+                enc.fit(y_train)
+                y_train = enc.transform(y_train).toarray()
+                enc.fit(y_val)
+                y_val = enc.transform(y_val).toarray()
         else:
             X_train = X
             y_train = y
+            y_train_copy = y_train.copy()
+            y_val_copy = y_val.copy()
+            # print(y_train)
+            if self.isHotEncoding:
+                enc.fit(y_train)
+                y_train = enc.transform(y_train).toarray()
+                print(y_train)
+
 
         biasArray = np.full((X_train.shape[0],1),1)
         # biasArray = np.full((X.shape[0],1),1)
         bestMSEsoFar = 1000.0
         bestWeight = []
         # print(X_train)
+        ## DO ONE HOT ENCODING##
+
+
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
             self.numberOfEpochs = self.numberOfEpochs + 1
-            # print("EPOCH NUMBER ",self.numberOfEpochs)
+            print("***************************************EPOCH********************************************************************************************************")
+            print("EPOCH NUMBER ",self.numberOfEpochs)
             X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
             # X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
@@ -101,21 +130,41 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             weights_change_array = []
             for x_unit,label_unit in zip(X_bias, y_shuffled):
                 numberIns = numberIns + 1
+
+                print("-------------------------INSTANCE ", numberIns ,"------------------------------------------------------------------------------------")
                 ## MAKE Y HOT PLATE ##
-                target = self._making_y_hot(classesY,label_unit)
+                # target = self._making_y_hot(classesY,label_unit)
+                # print(label_unit ,target)
+                target = label_unit
+
+                print("inputs",x_unit ,"target",target)
                 ##FORWARD PROPAGATION ##
                 self._forwardProp(x_unit,networkObject)
                 print("FORWARD PROPAGATION")
                 print(networkObject)
-                #BACKWARD PROPAGATION WITH MOMENTUM ##
-                weights_change_array = self._backwardProp(networkObject,target,x_unit)
+                # BACKWARD PROPAGATION WITH MOMENTUM ##
+                weights_change_array,error_array = self._backwardProp(networkObject,target,x_unit)
+                 # = self._backwardProp(networkObject,target,x_unit)[1]
                 print("BACKWARD PROPAGATION")
+                print("")
+                print("error")
+                print(error_array)
+                print("")
+                print("weights change")
                 print(weights_change_array)
+                print("")
                 print("LAST WEIGHTS CHANGE")
                 print(lastDeltaWeight)
-                self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
-                lastDeltaWeight = weights_change_array
-                print(networkObject)
+                print("")
+                last_instance_changeWeight_momentum = self._get_Delta_weights_mometum(lastDeltaWeight)
+                finalDeltaWeights = self._get_Final_weights_change(weights_change_array,last_instance_changeWeight_momentum)
+                lastDeltaWeight = finalDeltaWeights
+                self._updtate_weights(networkObject, finalDeltaWeights)
+                # self._updtate_weights(networkObject, weights_change_array,lastDeltaWeight)
+                # lastDeltaWeight = weights_change_array
+                print("NETWORK UPDATED")
+                print(self._getWeights_from_network(networkObject))
+                # print("")
 
                 # print("NEW WEIGHTS")
                 # print(networkObject)
@@ -126,13 +175,16 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             # lastDeltaWeight = weights_change_array
             self.weights = self._getWeights_from_network(networkObject)
             # print(self.weights)
-
             ### CALCULATING THE MEAN MSE FOR THE VALIDATION SET
             if self.validation_size > 0:
                 mean_mse = self._get_mse_valSet(X_val,y_val)
-                self.mse_epochs.append(mean_mse)
-                score_epoch = self.score(X_val,y_val)
-                self.accuracy_epochs.append(score_epoch)
+                mean_mse_training = self._get_mse_valSet(X_train,y_train)
+                self.mse_val_epochs.append(mean_mse)
+                self.mse_training_epochs.append(mean_mse_training)
+                score_epoch = self.score(X_val,y_val_copy)
+                print("score ", score_epoch)
+                self.accuracy_epochs_val.append(score_epoch)
+                print("BEST MSE SO FAR = ", bestMSEsoFar)
                 print("MEAN MSE = ", mean_mse)
                 if mean_mse < 0.000001:
                     break
@@ -140,12 +192,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 # print(numberOfEpochWithNoImprovement)
                 # print("bssf ",bestMSEsoFar)
                 # print("actual mse ", mean_mse)
-                if abs(bestMSEsoFar - mean_mse) < 0.015:
+                print(numberOfEpochWithNoImprovement)
+                if abs(bestMSEsoFar - mean_mse) < bestMSEsoFar * 0.001:
                     # print("1if")
                     numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
                     if numberOfEpochWithNoImprovement == 10:
                         # print("1if1if")
-
                         self.weights = bestWeight
                 else:
                     # print("1e")
@@ -175,7 +227,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         X_bias = np.concatenate((Xval,biasArray),axis=1)
 
         for x_unit,label_unit in zip(X_bias, yVal):
-            target = self._making_y_hot(yVal,label_unit)
+            target = label_unit
             self._forwardProp(x_unit,networkObject)
             outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True)
             mse = self._getMSE(outputs_outputLayer,target)
@@ -187,33 +239,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         return mean_mse
 
-    """ Function that increases or not the numberOf Epochs with no improvement"""
-    def _increaseNumberOfEpochWithNoImprovement(self,bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement,bestWeight):
-        print(numberOfEpochWithNoImprovement)
-        print("bssf ",bestMSEsoFar)
-        print("actual mse ", mean_mse)
-        if abs(bestMSEsoFar - mean_mse) < 0.015:
-            print("1if")
-            numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
-            if numberOfEpochWithNoImprovement == 10:
-                print("1if1if")
-
-                self.weights = bestWeight
-        else:
-            print("1e")
-
-            if bestMSEsoFar > mean_mse:
-                print("1e1if")
-                bestMSEsoFar = mean_mse
-                bestWeight = self.weights
-                numberOfEpochWithNoImprovement.clear()
-            else:
-                print("1e1e")
-
-                numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
-                if numberOfEpochWithNoImprovement == 10:
-                    self.weights = bestWeight
-
     """ Function to retrieve the weights from the network object"""
     def _getWeights_from_network(self, network):
         weights_network = []
@@ -221,6 +246,17 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             weights_layer = []
             for node in layer:
                 w = {"weights": node['weights']}
+                weights_layer.append(w)
+            weights_network.append(weights_layer)
+
+        return weights_network
+    """ Function to retrieve the weights from the network object"""
+    def _getListWeights_from_network(self, network):
+        weights_network = []
+        for layer in network:
+            weights_layer = []
+            for node in layer:
+                w = node['weights']
                 weights_layer.append(w)
             weights_network.append(weights_layer)
 
@@ -244,26 +280,17 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         networkObject = self._initialize_network()
         biasArray = np.full((X.shape[0],1),1)
         X_bias = np.concatenate((X,biasArray),axis=1)
-
+        m_size = 0
         for x_unit in X_bias:
             self._forwardProp(x_unit,networkObject)
             outputs_outputLayer = self._getOutputValuesLayer(networkObject[-1], True)
-            outputs_outputLayer_transformed = self._convertOutputToHotEncoding(outputs_outputLayer)
-            outputs = np.append(outputs, outputs_outputLayer_transformed)
+            m_size = outputs_outputLayer.shape[0]
+            outputs = np.append(outputs, outputs_outputLayer)
+
+        outputs = outputs.reshape(-1,m_size)
+        outputs = (outputs == outputs.max(axis=1)[:,None]).astype(int)
 
         return outputs
-
-    """ Function to retrieve the converted hot encoding output"""
-
-    def _convertOutputToHotEncoding(self, outputs):
-        hot_encoding = np.array([])
-        maxVal = np.amax(outputs)
-        for output in outputs:
-            if output < maxVal:
-                hot_encoding = np.append(hot_encoding,0)
-            else:
-                hot_encoding = np.append(hot_encoding,1)
-        return hot_encoding
 
     def initialize_weights(self,X,y):
         """ Initialize weights for perceptron. Don't forget the bias!
@@ -275,7 +302,9 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         networkWeights = []
         sizeWidthInputs = len(X[0]) + 1
-        sizeWidthOutputs = len(np.unique(y))
+        sizeWidthOutputs = 1
+        if self.isHotEncoding:
+            sizeWidthOutputs = len(np.unique(y))
         # sizeWidthHiddenLayersDefault = len(X[0]) * 2 + 1
         sizeWidthHiddenLayersDefault = len(X[0]) * 2
         randomValue = self.allWeightsValue
@@ -321,11 +350,15 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 Mean accuracy of self.predict(X) wrt. y.
         """
         outputs = self.predict(X)
-        y_hot_encoding = np.array([])
+        # print("outputs ",outputs)
+        # print("y ", y)
+        enc2 = OneHotEncoder()
+        enc2.fit(y)
+        y_hot_encoding = enc2.transform(y).toarray()
+        # print("this is  y hot encoding")
+        # print(y_hot_encoding)
+        # y_hot_encoding = np.array([])
         matches = []
-        for y_unit in y:
-            y_hot = self._making_y_hot(y,y_unit)
-            y_hot_encoding = np.append(y_hot_encoding, y_hot)
 
         for y_hot_unit, output in zip(y_hot_encoding, outputs):
             isTheSame = np.array_equal(y_hot_unit, output)
@@ -465,7 +498,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                     # print("output ", o)
                     o_dev = self._activate_node_derivative(network[indxLayer][indxNode]['net'])
                     # print("target value", target[indxNode])
-                    desv = (target[indxNode] - o) * o_dev
+                    targ = target[0]
+
+                    if self.isHotEncoding:
+                        targ = target[indxNode]
+                    # desv = (target[indxNode] - o) * o_dev
+                    desv = (targ - o) * o_dev
                     # print("desv value ", desv)
                     desv_layer.append(desv)
                     node_weight_change = []
@@ -526,29 +564,58 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         ## reversed the list
         weight_change_network.reverse()
-        return weight_change_network
+        desv_network.reverse()
+        return weight_change_network, desv_network
 
-    def _updtate_weights(self,network, Deltaweights,lastDeltaweights):
+    # def _updtate_weights(self,network, Deltaweights,lastDeltaweights):
+    #
+    #     for indxLayer in range(0, len(network)):
+    #         for indxNode in range(0, len(network[indxLayer])):
+    #             weights_original = np.array(network[indxLayer][indxNode]['weights'])
+    #             weights_change = np.array(Deltaweights[indxLayer][indxNode])
+    #             if len(lastDeltaweights) > 0:
+    #                 last_weights_change = np.array(lastDeltaweights[indxLayer][indxNode]) * self.momentum
+    #                 # print("*MOMENTUM", self.momentum,last_weights_change,weights_change)
+    #                 weights_change_momentum = np.add(weights_change, last_weights_change)
+    #                 print("weight change  MOMENTUM")
+    #                 print(weights_change_momentum)
+    #                 weights_updated = np.add(weights_original, weights_change_momentum)
+    #                 # print(weights_updated)
+    #                 network[indxLayer][indxNode]['weights'] = list(weights_updated)
+    #                 # print(network[indxLayer][indxNode]['weights'])
+    #
+    #             else:
+    #                 weights_updated = np.add(weights_original, weights_change)
+    #                 network[indxLayer][indxNode]['weights'] = list(weights_updated)
+    #
+    #     return network
+    def _updtate_weights(self,network, Deltaweights):
 
         for indxLayer in range(0, len(network)):
             for indxNode in range(0, len(network[indxLayer])):
                 weights_original = np.array(network[indxLayer][indxNode]['weights'])
                 weights_change = np.array(Deltaweights[indxLayer][indxNode])
-                if len(lastDeltaweights) > 0:
-                    last_weights_change = np.array(lastDeltaweights[indxLayer][indxNode]) * self.momentum
-                    # print("*MOMENTUM", self.momentum,last_weights_change,weights_change)
-                    weights_change_momentum = np.add(weights_change, last_weights_change)
-                    # print(weights_change_momentum)
-                    weights_updated = np.add(weights_original, weights_change_momentum)
-                    # print(weights_updated)
-                    network[indxLayer][indxNode]['weights'] = list(weights_updated)
-                    # print(network[indxLayer][indxNode]['weights'])
-
-                else:
-                    weights_updated = np.add(weights_original, weights_change)
-                    network[indxLayer][indxNode]['weights'] = list(weights_updated)
-
+                weights_updated = np.add(weights_original, weights_change)
+                network[indxLayer][indxNode]['weights'] = list(weights_updated)
         return network
+
+    def _get_Delta_weights_mometum(self,lastDeltaweights):
+
+        for indxLayer in range(0, len(lastDeltaweights)):
+            for indxNode in range(0, len(lastDeltaweights[indxLayer])):
+                lastDeltaweights[indxLayer][indxNode] = np.array(lastDeltaweights[indxLayer][indxNode]) * self.momentum
+        return lastDeltaweights
+
+    def _get_Final_weights_change(self,actualDeltaWeights, lastDeltaweights):
+        actualDeltaWeights2 = actualDeltaWeights.copy()
+        for indxLayer in range(0, len(actualDeltaWeights)):
+            for indxNode in range(0, len(actualDeltaWeights[indxLayer])):
+                weights_change_actual = np.array(actualDeltaWeights[indxLayer][indxNode])
+                weights_change_last = np.array(lastDeltaweights[indxLayer][indxNode])
+                final_weights_change = np.add(weights_change_actual, weights_change_last)
+                actualDeltaWeights2[indxLayer][indxNode] = final_weights_change
+        return actualDeltaWeights2
+
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
@@ -558,7 +625,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         return self.numberOfEpochs
 
     def get_mse_epochs(self):
-        return self.mse_epochs
+        return [self.mse_val_epochs, self.mse_training_epochs]
 
     def get_accuracy_epochs(self):
-        return self.accuracy_epochs
+        return self.accuracy_epochs_val
