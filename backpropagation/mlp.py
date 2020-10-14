@@ -4,7 +4,6 @@ import random
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-import scipy.stats as ss
 ### NOTE: The only methods you are required to have are:
 #   * predict
 #   * fit
@@ -35,11 +34,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.validation_size = validationSize
         self.numberOfEpochs = 0
         self.allWeightsValue = allWeightsValue
+        self.bestMSEValSet = 1000
+        self.bestAccuracyValSet = 0
         self.mse_val_epochs = []
         self.mse_training_epochs =[]
         self.accuracy_epochs_val = []
         self.isHotEncoding = isHotEncoding
-
     def fit(self, X, y, weights=None):
         """ Fit the data; run the algorithm and adjust the weights to find a good solution
 
@@ -56,7 +56,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
         if self.weights is None:
             self.weights = self.initialize_weights(X,y)
-        print("INITIAL WEIGHTS")
+        # print("INITIAL WEIGHTS")
         # print(self.debugWeightsStructure())
         # print(self.weights)
         # self.randomizeWeights()
@@ -72,7 +72,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         lastDeltaWeight = self._getListWeights_from_network(networkObject)
         numberOfEpochWithNoImprovement = [];
         classesY = np.unique(y)
-        print("classes" , classesY)
+        # print("classes" , classesY)
         ##Make the validation and training sets ###
         y_train = np.array([])
         y_train_copy = np.array([])
@@ -174,6 +174,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                     if bestMSEsoFar > mean_mse:
                     # if bestScoresoFar < score_epoch:
                         bestMSEsoFar = mean_mse
+                        self.bestMSEValSet = bestMSEsoFar
+                        self.bestAccuracyValSet = score_epoch
                         # bestScoresoFar = score_epoch
                         bestWeight = self.weights
                         numberOfEpochWithNoImprovement.clear()
@@ -668,3 +670,9 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     def get_accuracy_epochs(self):
         return self.accuracy_epochs_val
+
+    def getMSEvalSet(self):
+        return self.bestMSEValSet
+
+    def getAccuracyValSet(self):
+        return self.bestAccuracyValSet
