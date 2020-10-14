@@ -220,79 +220,141 @@ from sklearn.preprocessing import OneHotEncoder
 # ax.legend()
 # fig.savefig(save_path2)
 
-print("")
-print("PART 4 VOWEL DATASET")
+# print("")
+# print("PART 4 VOWEL DATASET")
+#
+# arff_path = r"training/vowel.arff"
+# dataRaw = arff.Arff(arff=arff_path, label_count=1)
+# data = dataRaw.data[:,0:-1]
+# labels = dataRaw.data[:,-1].reshape(-1,1)
+# data = data[:, [0,1,3,4,5,6,7,8,9,10,11,12]]
+# save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/backpropagation/plots/vowelMSENoded"
+# ## Define the initial Parameters ##
+# LR = 0.1
+# DET = 10
+# SHUFFLE = True
+# MOMENTUM = 0.5
+# VALIDATION_SIZE = 0.1
+# HOTENCODING = True
+# numberNodes = np.array([2])
+# ns = 0
+# numberNodesArray=[]
+# MSEs_Training = []
+# MSEs_Validation = []
+# MSEs_Test = []
+# numberOfEpochWithNoImprovement= []
+# bestAccuracy = 0
+# enc = OneHotEncoder()
+#
+# while len(numberOfEpochWithNoImprovement) < 1:
+#     numberNodes2 = np.power(numberNodes,ns)
+#     numberNodesList = list(numberNodes2)
+#     print("number Nodes",numberNodesList)
+#     numberNodesArray.append(numberNodes2[0])
+#     data_train,data_test , labels_train, labels_test = train_test_split(data, labels, test_size=0.25)
+#     BClass = mlp.MLPClassifier(lr = LR,momentum = MOMENTUM, shuffle = SHUFFLE, deterministic = DET, hidden_layer_widths= numberNodesList, validationSize = VALIDATION_SIZE,isHotEncoding= HOTENCODING)
+#     BClass.fit(data_train,labels_train)
+#     enc.fit(labels_train)
+#     enc.fit(labels_test)
+#     labels_train_hot = enc.transform(labels_train).toarray()
+#     labels_test_hot = enc.transform(labels_test).toarray()
+#     mse_train = BClass._get_mse_valSet(data_train,labels_train_hot)
+#     mse_val = BClass.getMSEvalSet()
+#     mse_test = BClass._get_mse_valSet(data_test, labels_test_hot)
+#     MSEs_Test.append(mse_test)
+#     MSEs_Training.append(mse_train)
+#     MSEs_Validation.append(mse_val)
+#     score_run = BClass.getAccuracyValSet()
+#     if score_run > 0.9999:
+#         break
+#     if abs(bestAccuracy - score_run) < bestAccuracy * 0.00001:
+#         numberOfEpochWithNoImprovement.append("1")
+#
+#     else:
+#         if bestAccuracy < score_run :
+#             bestAccuracy= score_run
+#             numberOfEpochWithNoImprovement.clear()
+#         else:
+#             numberOfEpochWithNoImprovement.append("1")
+#     ns = ns + 1
+#     print(numberNodes)
+#     print(numberOfEpochWithNoImprovement)
+# print("number nodes ", numberNodesArray)
+# x = np.arange(len(numberNodesArray))  # the label locations
+# width = 0.2  # the width of the bars
+#
+# fig, ax = plt.subplots()
+# barVal = ax.bar(x - width, MSEs_Validation, width, label='Validation Set')
+# barTrain = ax.bar(x , MSEs_Training, width, label='Training Set')
+# barTest = ax.bar(x + width, MSEs_Test, width, label='Test Set')
+#
+# # Add some text for labels, title and custom x-axis tick labels, etc.
+# ax.set_ylabel('MSE')
+# ax.set_title('Vowel MSE vs. # Nodes in Hidden Layer')
+# ax.set_xticks(x)
+# ax.set_xticklabels(numberNodesArray)
+# ax.set_xlabel('Hidden Layer Nodes')
+# ax.legend()
+# fig.savefig(save_path)
 
-arff_path = r"training/vowel.arff"
-dataRaw = arff.Arff(arff=arff_path, label_count=1)
-data = dataRaw.data[:,0:-1]
-labels = dataRaw.data[:,-1].reshape(-1,1)
-data = data[:, [0,1,3,4,5,6,7,8,9,10,11,12]]
-save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/backpropagation/plots/vowelMSENoded"
-## Define the initial Parameters ##
-LR = 0.1
-DET = 10
-SHUFFLE = True
-MOMENTUM = 0.5
-VALIDATION_SIZE = 0.1
-HOTENCODING = True
-numberNodes = np.array([2])
-ns = 0
-numberNodesArray=[]
-MSEs_Training = []
-MSEs_Validation = []
-MSEs_Test = []
-numberOfEpochWithNoImprovement= []
-bestAccuracy = 0
-enc = OneHotEncoder()
-
-while len(numberOfEpochWithNoImprovement) < 2:
-    numberNodes2 = np.power(numberNodes,ns)
-    numberNodesList = list(numberNodes2)
-    print("OWAWFA",numberNodesList)
-    numberNodesArray.append(numberNodes2[0])
-    data_train,data_test , labels_train, labels_test = train_test_split(data, labels, test_size=0.25)
-    BClass = mlp.MLPClassifier(lr = LR,momentum = MOMENTUM, shuffle = SHUFFLE, deterministic = DET, hidden_layer_widths= numberNodesList, validationSize = VALIDATION_SIZE,isHotEncoding= HOTENCODING)
-    BClass.fit(data_train,labels_train)
-    enc.fit(labels_train)
-    enc.fit(labels_test)
-    labels_train_hot = enc.transform(labels_train).toarray()
-    labels_test_hot = enc.transform(labels_test).toarray()
-    mse_train = BClass._get_mse_valSet(data_train,labels_train_hot)
-    mse_val = BClass.getMSEvalSet()
-    mse_test = BClass._get_mse_valSet(data_test, labels_test_hot)
-    MSEs_Test.append(mse_test)
-    MSEs_Training.append(mse_train)
-    MSEs_Validation.append(mse_val)
-    score_run = BClass.getAccuracyValSet()
-    if score_run > 0.9999:
-        break
-    if abs(bestAccuracy - score_run) < bestAccuracy * 0.00001:
-        numberOfEpochWithNoImprovement.append("@%@#%@#%@")
-
-    else:
-        if bestAccuracy < score_run :
-            bestAccuracy= score_run
-            numberOfEpochWithNoImprovement.clear()
-        else:
-            numberOfEpochWithNoImprovement.append("@%@#%@#%@")
-    ns = ns + 1
-    print(numberNodes)
-    print(numberOfEpochWithNoImprovement)
-print("number nodes ", numberNodesArray)
-x = np.arange(len(numberNodesArray))  # the label locations
-width = 0.2  # the width of the bars
-
-fig, ax = plt.subplots()
-barVal = ax.bar(x - width, MSEs_Validation, width, label='Validation Set')
-barTrain = ax.bar(x , MSEs_Training, width, label='Training Set')
-barTest = ax.bar(x + width, MSEs_Test, width, label='Test Set')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax.set_ylabel('MSE')
-ax.set_title('Vowel MSE vs. # Nodes in Hidden Layer')
-ax.set_xticks(x)
-ax.set_xticklabels(numberNodesArray)
-ax.set_xlabel('Hidden Layer Nodes')
-ax.legend()
-fig.savefig(save_path)
+# print("")
+# print("PART 5 VOWEL DATASET")
+# arff_path = r"training/vowel.arff"
+# dataRaw = arff.Arff(arff=arff_path, label_count=1)
+# data = dataRaw.data[:,0:-1]
+# labels = dataRaw.data[:,-1].reshape(-1,1)
+# data = data[:, [0,1,3,4,5,6,7,8,9,10,11,12]]
+# save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/backpropagation/plots/vowelEpochsMomentum"
+# ## Define the initial Parameters ##
+# LR = 0.1
+# DET = 10
+# SHUFFLE = True
+# MOMENTUM = 0.0
+# VALIDATION_SIZE = 0.1
+# HOTENCODING = True
+# ns = 0
+# MSEs_Training = []
+# MSEs_Validation = []
+# MSEs_Test = []
+# numberOfEpochWithNoImprovement= []
+# bestAccuracy = 0
+# momentumList=[]
+# numberEpochsToStop=[]
+# enc = OneHotEncoder()
+# while len(numberOfEpochWithNoImprovement) < 1:
+#     momentumList.append(MOMENTUM)
+#     data_train,data_test , labels_train, labels_test = train_test_split(data, labels, test_size=0.25)
+#     BClass = mlp.MLPClassifier(lr = LR,momentum = MOMENTUM, shuffle = SHUFFLE, deterministic = DET, hidden_layer_widths= [16], validationSize = VALIDATION_SIZE,isHotEncoding= HOTENCODING)
+#     BClass.fit(data_train,labels_train)
+#     numberEpochsToStop.append(BClass.get_numberEpochs())
+#
+#     score_run = BClass.getAccuracyValSet()
+#     if score_run > 0.9999:
+#         break
+#     if abs(bestAccuracy - score_run) < bestAccuracy * 0.00001:
+#         numberOfEpochWithNoImprovement.append("1")
+#
+#     else:
+#         if bestAccuracy < score_run :
+#             bestAccuracy= score_run
+#             numberOfEpochWithNoImprovement.clear()
+#         else:
+#             numberOfEpochWithNoImprovement.append("1")
+#     ns = ns + 1
+#     MOMENTUM = MOMENTUM + 0.1
+#     print(numberOfEpochWithNoImprovement)
+#
+# """ GRAPHS MOMENTUM VS EPOCHS """
+# fig, ax1 = plt.subplots()
+# ax1.title.set_text('Vowel Epochs vs. Momentum')
+#
+# color = 'tab:red'
+# ax1.set_xlabel('Momentum')
+# ax1.set_ylabel('Epochs', color=color)
+# ax1.plot(numberEpochsToStop, momentumList, color=color)
+# ax1.tick_params(axis='y', labelcolor=color)
+#
+#
+# fig.tight_layout()  # otherwise the right y-label is slightly clipped
+# # plt.show()
+# fig.savefig(save_path)
