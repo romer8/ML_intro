@@ -321,28 +321,17 @@ from sklearn.preprocessing import OneHotEncoder
 # momentumList=[]
 # numberEpochsToStop=[]
 # enc = OneHotEncoder()
-# while len(numberOfEpochWithNoImprovement) < 1:
+# MOMENTUMS = [0.0,0.1,0.2,0.4,0.5,0.6,0.8]
+#
+# # while len(numberOfEpochWithNoImprovement) < 2:
+# for MOMENTUM in MOMENTUMS:
 #     momentumList.append(MOMENTUM)
 #     data_train,data_test , labels_train, labels_test = train_test_split(data, labels, test_size=0.25)
 #     BClass = mlp.MLPClassifier(lr = LR,momentum = MOMENTUM, shuffle = SHUFFLE, deterministic = DET, hidden_layer_widths= [16], validationSize = VALIDATION_SIZE,isHotEncoding= HOTENCODING)
 #     BClass.fit(data_train,labels_train)
 #     numberEpochsToStop.append(BClass.get_numberEpochs())
+#     print(momentumList, numberEpochsToStop)
 #
-#     score_run = BClass.getAccuracyValSet()
-#     if score_run > 0.9999:
-#         break
-#     if abs(bestAccuracy - score_run) < bestAccuracy * 0.00001:
-#         numberOfEpochWithNoImprovement.append("1")
-#
-#     else:
-#         if bestAccuracy < score_run :
-#             bestAccuracy= score_run
-#             numberOfEpochWithNoImprovement.clear()
-#         else:
-#             numberOfEpochWithNoImprovement.append("1")
-#     ns = ns + 1
-#     MOMENTUM = MOMENTUM + 0.1
-#     print(numberOfEpochWithNoImprovement)
 #
 # """ GRAPHS MOMENTUM VS EPOCHS """
 # fig, ax1 = plt.subplots()
@@ -351,7 +340,7 @@ from sklearn.preprocessing import OneHotEncoder
 # color = 'tab:red'
 # ax1.set_xlabel('Momentum')
 # ax1.set_ylabel('Epochs', color=color)
-# ax1.plot(numberEpochsToStop, momentumList, color=color)
+# ax1.plot(momentumList,numberEpochsToStop, color=color)
 # ax1.tick_params(axis='y', labelcolor=color)
 #
 #

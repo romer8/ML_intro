@@ -93,8 +93,8 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         bestWeight = []
         while len(numberOfEpochWithNoImprovement) < self.deterministic:
             self.numberOfEpochs = self.numberOfEpochs + 1
-            print("***************************************EPOCH********************************************************************************************************")
-            print("EPOCH NUMBER ",self.numberOfEpochs)
+            # print("***************************************EPOCH********************************************************************************************************")
+            # print("EPOCH NUMBER ",self.numberOfEpochs)
             X_shuffled,y_shuffled = self._shuffle_data(X_train,y_train)
             # X_shuffled,y_shuffled = self._shuffle_data(X,y)
             X_bias = np.concatenate((X_shuffled,biasArray),axis=1)
@@ -129,19 +129,20 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 self.mse_val_epochs.append(mean_mse)
                 self.mse_training_epochs.append(mean_mse_training)
                 score_epoch = self.score(X_val,y_val_copy)
-                print("score ", score_epoch)
+                # print("score ", score_epoch)
                 # print("BEST Score SO FAR = ", bestScoresoFar)
 
                 self.accuracy_epochs_val.append(score_epoch)
-                print("BEST MSE SO FAR = ", bestMSEsoFar)
-                print("MEAN MSE = ", mean_mse)
+                # print("BEST MSE SO FAR = ", bestMSEsoFar)
+                # print("MEAN MSE = ", mean_mse)
                 if mean_mse < 0.0001:
                     break
                 # self._increaseNumberOfEpochWithNoImprovement(bestMSEsoFar,mean_mse,numberOfEpochWithNoImprovement,bestWeight)
                 # print(numberOfEpochWithNoImprovement)
                 # print("bssf ",bestMSEsoFar)
                 # print("actual mse ", mean_mse)
-                print(numberOfEpochWithNoImprovement)
+                
+                # print(numberOfEpochWithNoImprovement)
 
                 if abs(bestMSEsoFar - mean_mse) < bestMSEsoFar * 0.00001:
                     numberOfEpochWithNoImprovement.append(bestMSEsoFar - mean_mse)
