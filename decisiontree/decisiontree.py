@@ -17,7 +17,7 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             DT  = DTClassifier()
             or
             DT = DTClassifier(count = [2,3,2,2])
-            Dataset = 
+            Dataset =
             [[0,1,0,0],
             [1,2,1,1],
             [0,1,1,0],
@@ -25,6 +25,7 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             [0,0,1,1]]
 
         """
+        self.counts = counts
 
     def fit(self, X, y):
         """ Fit the data; Make the Desicion tree
@@ -58,7 +59,6 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
 
         Args:
             X (array-like): A 2D numpy array with data, excluding targets
-            y (array-like): A 2D numpy array of the targets 
+            y (array-like): A 2D numpy array of the targets
         """
         return 0
-
