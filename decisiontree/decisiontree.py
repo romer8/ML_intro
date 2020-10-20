@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 ### NOTE: The only methods you are required to have are:
@@ -38,9 +39,62 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
 
         """
+        SINFO = self.generalInfo(y)
+        newXy = np.concatenate((X, y), axis = 1)
+        X_transposed = np.transpose(newXy)
+        # uniqueLabels = numpy.unique(y)
+        listInformations = []
+        for column in range (0, len(self.counts)-1):
+            (unique, counts) = np.unique(X_transposed[column], return_counts=True)
+            tableClasses = np.asarray((unique, counts)).T
+            PClassesFeatureInfo = []
+            for columnClass in range(0, len(tableClasses)):
+                filter = np.asarray([tableClasses[columnClass][0]])
+                allFromOneClass = X[np.in1d(X[:, column], filter)]
+                partialP = len(allFromOneClass)/len(newXy)
+                labelP = 0
+                (uniqueLabel, countsLabels) = np.unique(allFromOneClass[column], return_counts=True)
+                tableOneClasses = np.asarray((uniqueLabel, countsLabels)).T
+                for oneFeatureClass in tableOneClasses:
+                    p = oneFeatureClass[1]/len(allFromOneClass)
+                    labelP += -p*math.log2(p)
 
+                oneClassFeatureInfo = partialP * labelP
+                PClassesFeatureInfo.append(oneClassFeatureInfo)
+            total_PClassesFeatureInfo = np.sum(np.array(PClassesFeatureInfo))
+            listInformations.append(total_PClassesFeatureInfo)
+
+        branchMostInfo = gainRatio(listInformations)
+        print(branchMostInfo)
         return self
 
+    """ Generate the Information gain"""
+    def gainRatio(self,subinfos):
+        minElement = np.amin(np.array(subinfos))
+        indx = np.where(subinfos == np.amin(subinfos))
+        return indx
+    """ Generate the Info(S)"""
+
+    def generalInfo(self, y):
+        totalInfo = 0
+        (unique, counts) = np.unique(y, return_counts=True)
+        tableClasses = np.asarray((unique, counts)).T
+        # print("tableClasses")
+        # print(tableClasses)
+        for labelClass in tableClasses:
+            p = labelClass[1] / len(y)
+            totalInfo += -p * math.log2(p)
+        # print(totalInfo)
+        return totalInfo
+
+
+    def featureInfo(self,X,y):
+        # (unique, counts) = numpy.unique(Xs, return_counts=True)
+        # tableClasses = np.asarray((unique, counts)).T
+        # for labelClass in tableClasses:
+        #     if
+
+        return 0
     def predict(self, X):
         """ Predict all classes for a dataset X
 
