@@ -65,7 +65,7 @@ Acc = DTClass.score(data2,labels2)
 print("Accuracy = [{:.2f}]".format(Acc))
 
 print("*******************PART 2************************************")
-
+print("*******CARS DATASET")
 arff_path= r"training/cars.arff"
 mat = arff.Arff(arff_path)
 
@@ -82,8 +82,8 @@ kfold = KFold(n_splits=10, random_state=None, shuffle=True)
 scores = []
 
 for train, test in kfold.split(data):
-    print("DATA SIZE ", len(data[train]))
-    print("TEST SIZE ", len(data[test]))
+    # print("DATA SIZE ", len(data[train]))
+    # print("TEST SIZE ", len(data[test]))
 	# print('train: %s, test: %s' % (data2[train], data2[test]))
     columns = len(data[train][0])
     data_transposed = data[train].T
@@ -91,7 +91,7 @@ for train, test in kfold.split(data):
     for column in range(0, columns):
         unique = np.unique(data_transposed[column])
         counts.append(len(unique))
-    print("COUNTS TRAIN",counts)
+    # print("COUNTS TRAIN",counts)
     DTClass = DTClassifier(counts)
     splitXindxRange = data[train].shape[1] - 1
     labelsK = data[train][:, np.r_[splitXindxRange]]
@@ -106,9 +106,67 @@ for train, test in kfold.split(data):
     for column in range(0, columnsTest):
         unique = np.unique(dataTest_transposed[column])
         countsTest.append(len(unique))
-    print("COUNTS TEST",countsTest)
+    # print("COUNTS TEST",countsTest)
 
     scores.append(DTClass.score(dataTestK,labelsTestK))
 
     # break
-print("Scores ", scores)
+print("Scores Cars Dataset", scores)
+print("*******VOTING DATASET")
+
+arff_path= r"training/voting.arff"
+mat = arff.Arff(arff_path)
+
+# counts = [] ## this is so you know how many types for each column
+# for i in range(mat.data.shape[1]):
+#        counts += [mat.unique_value_count(i)]
+data2 = mat.data[:,0:-1]
+labels = mat.data[:,-1].reshape(-1,1)
+data = np.concatenate((data2, labels), axis = 1)
+#Find indices that you need to replace
+inds = np.where(np.isnan(data))
+col_mean = np.nanmean(data, axis=0)
+col_new_val = []
+print(col_mean)
+for col in col_mean:
+    col_new_val.append(-1)
+
+#Place column means in the indices. Align the arrays using take
+data[inds] = np.take(np.array(col_new_val), inds[1])
+print(data)
+""" now K-folding """
+# prepare cross validation
+kfold = KFold(n_splits=10, random_state=None, shuffle=True)
+scores = []
+
+for train, test in kfold.split(data):
+    # print("DATA SIZE ", len(data[train]))
+    # print("TEST SIZE ", len(data[test]))
+	# print('train: %s, test: %s' % (data2[train], data2[test]))
+    columns = len(data[train][0])
+    data_transposed = data[train].T
+    counts = []
+    for column in range(0, columns):
+        unique = np.unique(data_transposed[column])
+        counts.append(len(unique))
+    # print("COUNTS TRAIN",counts)
+    DTClass = DTClassifier(counts)
+    splitXindxRange = data[train].shape[1] - 1
+    labelsK = data[train][:, np.r_[splitXindxRange]]
+    dataK = data[train][:, np.r_[0:splitXindxRange]]
+    labelsTestK = data[test][:, np.r_[splitXindxRange]]
+    dataTestK = data[test][:, np.r_[0:splitXindxRange]]
+    DTClass.fit(dataK,labelsK)
+
+    columnsTest = len(data[test][0])
+    dataTest_transposed = data[test].T
+    countsTest = []
+    for column in range(0, columnsTest):
+        unique = np.unique(dataTest_transposed[column])
+        countsTest.append(len(unique))
+    # print("COUNTS TEST",countsTest)
+
+    scores.append(DTClass.score(dataTestK,labelsTestK))
+
+    # break
+print("Scores Voting Dataset", scores)
