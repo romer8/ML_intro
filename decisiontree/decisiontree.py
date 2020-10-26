@@ -44,8 +44,9 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
 
         """
         self.MakeThree(X, y)
-        print("*********FINAL THREE********")
-        print(self.three)
+        # print("*********FINAL THREE********")
+        # print(self.three)
+
         # SINFO = self.generalInfo(y)
         # branchMostInfo = -999 ## none has been decided yet
         # DTstructure = [] ## to see all the three structure
@@ -89,18 +90,18 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
 
         del(node['groups'])
         del(node['groupsValues'])
-        print("splitGroups")
-        print(splitGroups)
+        # print("splitGroups")
+        # print(splitGroups)
         for indxNode in range(0,len(splitGroups)):
             node["nodeSplit"+str(indxNode)]  = None
             if self.isPure(splitGroups[indxNode]):
                 node["nodeSplit"+str(indxNode)] = {'label': self.getOutputs(splitGroups[indxNode],node['mostCommonValue']),
                                                    'value':splitGroupsValues[indxNode]}
-                print(splitGroups[indxNode],"-----Pure--->>>>>")
+                # print(splitGroups[indxNode],"-----Pure--->>>>>")
             elif self.noMoreAttributes(splitGroups[indxNode]):
                 node["nodeSplit"+str(indxNode)] = {'label': self.getOutputs(splitGroups[indxNode],node['mostCommonValue']),
                                                    'value':splitGroupsValues[indxNode]}
-                print(splitGroups[indxNode],"-----No more attributes--->>>>>")
+                # print(splitGroups[indxNode],"-----No more attributes--->>>>>")
             # return
             else:
 
@@ -179,6 +180,27 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         # print("tableClass 1")
         # print(tableClasses)
         return tableClasses
+
+    def getUniqueClassTable2(self,X_transposed, columnIndx):
+        (unique, counts) = np.unique(X_transposed[columnIndx], return_counts=True)
+        tableClasses = np.asarray((unique, counts)).T
+        print("tableclass",tableClasses)
+        if len(tableClasses) != self.counts[columnIndx]:
+            newAdded = 0
+            newArray = np.array([])
+            for indx in range(0, len(unique)):
+                if unique[indx] == newAdded:
+                    newAdded = newAdded + 1
+                else:
+                    addArray = np.asarray((newAdded,0))
+                    newArray = np.insert(tableClasses,indx,addArray)
+            print("newArray",newArray.reshape(-1,2))
+            return newArray.reshape(-1,2)
+        else:
+            return tableClasses
+        # print("tableClass 1")
+        # print(tableClasses)
+        return tableClasses
     def noMoreColumnAttributes(self,group,indx):
         # splitXindxRange = group.shape[1] - 1
         # X_transposed = group[:, np.r_[0:splitXindxRange]]
@@ -192,12 +214,10 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         return isAttributeDone
 
     def getSplit(self,newXy,valueNodeSplit):
-        # splitXindxRange = newXy.shape[1] - 1
-        # X = newXy[:, np.r_[0:splitXindxRange]]
-        # X_transposed = np.transpose(X)
-        print("SPLIT")
-        print("XY")
-        print(newXy)
+
+        # print("SPLIT")
+        # print("XY")
+        # print(newXy)
 
         X_transposed = np.transpose(newXy)
         robject = {}
@@ -234,7 +254,7 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             else:
                 listInformations.append(10000)
         branchMostInfoIndex = self.gainRatio(listInformations)
-        print("listInformations ", listInformations,branchMostInfoIndex)
+        # print("listInformations ", listInformations,branchMostInfoIndex)
         robject['value'] = valueNodeSplit
         robject['attribute_split'] =  branchMostInfoIndex
         robject['mostCommonValue'] = self.mostCommonValue(newXy)
@@ -242,7 +262,9 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         groups = []
         ## this is the part ot append the groups##
         tableClasses = self.getUniqueClassTable(X_transposed, branchMostInfoIndex)
-        print("tableClass ", tableClasses )
+        # print("tableClass ", tableClasses )
+        # print(branchMostInfoIndex,len(tableClasses),self.counts[branchMostInfoIndex])
+        # print(tableClasses)
         for columnClass in range(0, len(tableClasses)):
             filter = np.asarray([tableClasses[columnClass][0]])
             # print("filter",filter)
@@ -268,46 +290,6 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         return mode_labels
 
 
-    def featureInfo(self,newXy,X_transposed,branchMostInfo,DTstructure,DTinfoGain):
-        listInformations = []
-        for column in range (0, len(X_transposed)-1):
-            if branchMostInfo != column:
-                tableClasses = self.getUniqueClassTable(X_transposed,column)
-                # print("tableClass 1")
-                # print(tableClasses)
-                PClassesFeatureInfo = []
-                for columnClass in range(0, len(tableClasses)):
-                    filter = np.asarray([tableClasses[columnClass][0]])
-                    # print("filter",filter)
-                    mask = np.in1d(newXy[:, column], filter)
-                    allFromOneClass = newXy[mask]
-                    # print("complete table ", newXy)
-                    # print("allFromOneClass ",allFromOneClass)
-                    partialP = len(allFromOneClass)/len(newXy)
-                    # print("partial_P ", partialP)
-                    labelP = 0
-                    # (uniqueLabel, countsLabels) = np.unique(np.transpose(allFromOneClass)[-1], return_counts=True)
-                    # tableLabelOneClasses = np.asarray((uniqueLabel, countsLabels)).T
-                    tableLabelOneClasses = self.getUniqueClassTable(np.transpose(allFromOneClass),-1)
-                    # print("tableLabelOneClasses")
-                    # print(tableLabelOneClasses)
-                    for oneFeatureClass in tableLabelOneClasses:
-                        p = oneFeatureClass[1]/len(allFromOneClass)
-                        labelP += -p*math.log2(p)
-                    # print("labelP ", labelP)
-                    oneClassFeatureInfo = partialP * labelP
-                    # print("TOtal p ", oneClassFeatureInfo)
-                    PClassesFeatureInfo.append(oneClassFeatureInfo)
-                total_PClassesFeatureInfo = np.sum(np.array(PClassesFeatureInfo))
-                listInformations.append(total_PClassesFeatureInfo)
-        # print("listInformations ", listInformations)
-        branchMostInfoIndex = self.gainRatio(listInformations)
-        DTinfoGain.append(branchMostInfoIndex)
-        DTstructure.append(listInformations)
-        # print(branchMostInfoIndex)
-        return branchMostInfoIndex
-
-
 
     def predict(self, X):
         """ Predict all classes for a dataset X
@@ -321,19 +303,30 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         """
         labelsPred = []
         for row in X:
-            # print("ROW ",row)
             pred_label = self.predictOneRow(row,self.three)
-            # print("ROW_PRED", pred_label)
+            # print("ROW ",row, "ROW_PRED", pred_label)
             labelsPred.append(pred_label)
-        print("*****************PREDICTIONS*************")
-        print(labelsPred)
+        # print("*****************PREDICTIONS*************")
+        # print(labelsPred)
         return labelsPred
 
     def predictOneRow(self,row, node):
         # print("***************************************")
         indx = node['attribute_split']
         nodeValue = 10000
-        for attributeClass in range(0,self.counts[indx]):
+        # print(list(node.keys()))
+        filter = ['value','attribute_split','mostCommonValue']
+        nodesArray = []
+        for attri in list(node.keys()):
+            if attri not in filter:
+                nodesArray.append(attri)
+
+        # for attributeClass in range(0,self.counts[indx]):
+        for attributeClass in range(0,len(nodesArray)):
+            # print(node)
+            # print('nodeSplit'+str(attributeClass),self.counts[indx])
+            # print(self.counts)
+            # print(indx)
             nodo = node['nodeSplit'+str(attributeClass)]
 
             # print("NODO", node)
