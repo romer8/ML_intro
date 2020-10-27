@@ -9,7 +9,11 @@ import itertools
 from decisiontree import DTClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
-
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import load_breast_cancer
+from sklearn import tree
+import graphviz
+import pprint
 
 print("*******************PART 1************************************")
 
@@ -30,8 +34,6 @@ DTClass.fit(data,labels)
 mat2 = arff.Arff(arff_path_test)
 data2 = mat2.data[:,0:-1]
 labels2 = mat2.data[:,-1].reshape(-1,1)
-# print(data2)
-# print(labels2)
 pred = DTClass.predict(data2)
 Acc = DTClass.score(data2,labels2)
 
@@ -49,19 +51,17 @@ for i in range(mat.data.shape[1]):
        counts += [mat.unique_value_count(i)]
 data = mat.data[:,0:-1]
 labels = mat.data[:,-1].reshape(-1,1)
-# print(data)
-# print(labels)
+
 DTClass = DTClassifier(counts)
 DTClass.fit(data,labels)
 mat2 = arff.Arff(arff_path_test)
 data2 = mat2.data[:,0:-1]
 labels2 = mat2.data[:,-1].reshape(-1,1)
-# print(data2)
-# print(labels2)
 pred = DTClass.predict(data2)
+
 Acc = DTClass.score(data2,labels2)
 
-# np.savetxt("pred_zoo.csv",pred,delimiter=",")
+np.savetxt("pred_zoo.csv",pred,delimiter=",")
 print("Accuracy = [{:.2f}]".format(Acc))
 
 print("*******************PART 2************************************")
@@ -69,29 +69,22 @@ print("*******CARS DATASET")
 arff_path= r"training/cars.arff"
 mat = arff.Arff(arff_path)
 
-# counts = [] ## this is so you know how many types for each column
-# for i in range(mat.data.shape[1]):
-#        counts += [mat.unique_value_count(i)]
+
 data2 = mat.data[:,0:-1]
 labels = mat.data[:,-1].reshape(-1,1)
 data = np.concatenate((data2, labels), axis = 1)
-# print(data)
 """ now K-folding """
 # prepare cross validation
 kfold = KFold(n_splits=10, random_state=None, shuffle=True)
 scores = []
 
 for train, test in kfold.split(data):
-    # print("DATA SIZE ", len(data[train]))
-    # print("TEST SIZE ", len(data[test]))
-	# print('train: %s, test: %s' % (data2[train], data2[test]))
     columns = len(data[train][0])
     data_transposed = data[train].T
     counts = []
     for column in range(0, columns):
         unique = np.unique(data_transposed[column])
         counts.append(len(unique))
-    # print("COUNTS TRAIN",counts)
     DTClass = DTClassifier(counts)
     splitXindxRange = data[train].shape[1] - 1
     labelsK = data[train][:, np.r_[splitXindxRange]]
@@ -106,8 +99,6 @@ for train, test in kfold.split(data):
     for column in range(0, columnsTest):
         unique = np.unique(dataTest_transposed[column])
         countsTest.append(len(unique))
-    # print("COUNTS TEST",countsTest)
-
     scores.append(DTClass.score(dataTestK,labelsTestK))
 
     # break
@@ -117,39 +108,23 @@ print("*******VOTING DATASET")
 arff_path= r"training/voting.arff"
 mat = arff.Arff(arff_path)
 
-# counts = [] ## this is so you know how many types for each column
-# for i in range(mat.data.shape[1]):
-#        counts += [mat.unique_value_count(i)]
 data2 = mat.data[:,0:-1]
 labels = mat.data[:,-1].reshape(-1,1)
 data = np.concatenate((data2, labels), axis = 1)
-#Find indices that you need to replace
-inds = np.where(np.isnan(data))
-col_mean = np.nanmean(data, axis=0)
-col_new_val = []
-print(col_mean)
-for col in col_mean:
-    col_new_val.append(-1)
 
-#Place column means in the indices. Align the arrays using take
-data[inds] = np.take(np.array(col_new_val), inds[1])
-print(data)
+
 """ now K-folding """
 # prepare cross validation
 kfold = KFold(n_splits=10, random_state=None, shuffle=True)
 scores = []
 
 for train, test in kfold.split(data):
-    # print("DATA SIZE ", len(data[train]))
-    # print("TEST SIZE ", len(data[test]))
-	# print('train: %s, test: %s' % (data2[train], data2[test]))
     columns = len(data[train][0])
     data_transposed = data[train].T
     counts = []
     for column in range(0, columns):
         unique = np.unique(data_transposed[column])
         counts.append(len(unique))
-    # print("COUNTS TRAIN",counts)
     DTClass = DTClassifier(counts)
     splitXindxRange = data[train].shape[1] - 1
     labelsK = data[train][:, np.r_[splitXindxRange]]
@@ -164,9 +139,127 @@ for train, test in kfold.split(data):
     for column in range(0, columnsTest):
         unique = np.unique(dataTest_transposed[column])
         countsTest.append(len(unique))
-    # print("COUNTS TEST",countsTest)
 
     scores.append(DTClass.score(dataTestK,labelsTestK))
 
     # break
 print("Scores Voting Dataset", scores)
+
+print("*******************PART 5************************************")
+print("*******CARS DATASET*******************************************")
+arff_path= r"training/cars.arff"
+mat = arff.Arff(arff_path)
+
+data2 = mat.data[:,0:-1]
+labels = mat.data[:,-1].reshape(-1,1)
+X_train, X_test, y_train, y_test = train_test_split(data2, labels, test_size= 0.10)
+clf = DecisionTreeClassifier()
+path = clf.cost_complexity_pruning_path(X_train, y_train)
+ccp_alphas, impurities = path.ccp_alphas, path.impurities
+clfs = []
+for ccp_alpha in ccp_alphas:
+    clf = DecisionTreeClassifier(ccp_alpha=ccp_alpha)
+    clf.fit(X_train, y_train)
+    clfs.append(clf)
+clfs = clfs[:-1]
+ccp_alphas = ccp_alphas[:-1]
+node_counts = [clf.tree_.node_count for clf in clfs]
+depth = [clf.tree_.max_depth for clf in clfs]
+fig, ax = plt.subplots(2, 1)
+ax[0].plot(ccp_alphas, node_counts, marker='o', drawstyle="steps-post")
+ax[0].set_xlabel("alpha")
+ax[0].set_ylabel("number of nodes")
+ax[0].set_title("Number of nodes vs alpha")
+ax[1].plot(ccp_alphas, depth, marker='o', drawstyle="steps-post")
+ax[1].set_xlabel("alpha")
+ax[1].set_ylabel("depth of tree")
+ax[1].set_title("Depth vs alpha")
+fig.tight_layout()
+save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/decisiontree/plots/carsdepth"
+fig.savefig(save_path)
+train_scores = [clf.score(X_train, y_train) for clf in clfs]
+test_scores = [clf.score(X_test, y_test) for clf in clfs]
+print("Cars Scores: ", test_scores)
+fig, ax = plt.subplots()
+ax.set_xlabel("alpha")
+ax.set_ylabel("accuracy")
+ax.set_title("Accuracy vs alpha for training and testing sets")
+ax.plot(ccp_alphas, train_scores, marker='o', label="train",
+        drawstyle="steps-post")
+ax.plot(ccp_alphas, test_scores, marker='o', label="test",
+        drawstyle="steps-post")
+ax.legend()
+# plt.show()
+save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/decisiontree/plots/carsaccuracy"
+fig.savefig(save_path)
+
+
+print("******* VOTING DATASET*******************************************")
+arff_path= r"training/voting.arff"
+mat = arff.Arff(arff_path)
+
+data = mat.data[:,0:-1]
+labels = mat.data[:,-1].reshape(-1,1)
+inds = np.where(np.isnan(data))
+col_mean = np.nanmean(data, axis=0)
+col_new_val = []
+for col in col_mean:
+    col_new_val.append(-1)
+
+#Place column means in the indices. Align the arrays using take
+data[inds] = np.take(np.array(col_new_val), inds[1])
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size= 0.10)
+clf = DecisionTreeClassifier()
+path = clf.cost_complexity_pruning_path(X_train, y_train)
+ccp_alphas, impurities = path.ccp_alphas, path.impurities
+
+clfs = []
+for ccp_alpha in ccp_alphas:
+    clf = DecisionTreeClassifier(ccp_alpha=ccp_alpha)
+    clf.fit(X_train, y_train)
+    clfs.append(clf)
+clfs = clfs[:-1]
+ccp_alphas = ccp_alphas[:-1]
+node_counts = [clf.tree_.node_count for clf in clfs]
+depth = [clf.tree_.max_depth for clf in clfs]
+fig, ax = plt.subplots(2, 1)
+ax[0].plot(ccp_alphas, node_counts, marker='o', drawstyle="steps-post")
+ax[0].set_xlabel("alpha")
+ax[0].set_ylabel("number of nodes")
+ax[0].set_title("Number of nodes vs alpha")
+ax[1].plot(ccp_alphas, depth, marker='o', drawstyle="steps-post")
+ax[1].set_xlabel("alpha")
+ax[1].set_ylabel("depth of tree")
+ax[1].set_title("Depth vs alpha")
+fig.tight_layout()
+save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/decisiontree/plots/votingdepth"
+fig.savefig(save_path)
+
+
+train_scores = [clf.score(X_train, y_train) for clf in clfs]
+test_scores = [clf.score(X_test, y_test) for clf in clfs]
+print("Voting Scores: ", test_scores)
+fig, ax = plt.subplots()
+ax.set_xlabel("alpha")
+ax.set_ylabel("accuracy")
+ax.set_title("Accuracy vs alpha for training and testing sets")
+ax.plot(ccp_alphas, train_scores, marker='o', label="train",
+        drawstyle="steps-post")
+ax.plot(ccp_alphas, test_scores, marker='o', label="test",
+        drawstyle="steps-post")
+ax.legend()
+# plt.show()
+save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/decisiontree/plots/votingaccuracy"
+fig.savefig(save_path)
+
+
+print("******* CANCER DATASET*******************************************")
+X, y = load_breast_cancer(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+clf = DecisionTreeClassifier(criterion = "entropy")
+clf = clf.fit(X_train, y_train)
+scores = clf.score(X_test,y_test)
+print(scores)
+dot_data = tree.export_graphviz(clf, out_file=None, special_characters=True)
+graph = graphviz.Source(dot_data)
+graph.render("cancerBreast")

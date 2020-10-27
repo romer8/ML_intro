@@ -43,32 +43,15 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
 
         """
-        self.MakeThree(X, y)
-        # print("*********FINAL THREE********")
-        # print(self.three)
+        inds = np.where(np.isnan(X))
+        col_mean = np.nanmean(X, axis=0)
+        col_new_val = []
+        for col in col_mean:
+            col_new_val.append(-1)
 
-        # SINFO = self.generalInfo(y)
-        # branchMostInfo = -999 ## none has been decided yet
-        # DTstructure = [] ## to see all the three structure
-        # DTinfoGain = []
-        # newXy = np.concatenate((X, y), axis = 1)
-        # X_transposed = np.transpose(newXy)
-        # branchMostInfo = self.featureInfo(newXy,X_transposed,branchMostInfo,DTstructure,DTinfoGain)
-        # print(DTinfoGain)
-        #
-        # tableClasses = self.getUniqueClassTable(X_transposed, branchMostInfo)
-        # for columnClass in range(0, len(tableClasses)):
-        #     filter = np.asarray([tableClasses[columnClass][0]])
-        #     # print("filter",filter)
-        #     # print("column ",branchMostInfo)
-        #     mask = np.in1d(newXy[:,branchMostInfo], filter)
-        #     newXy2 = newXy[mask]
-        #     # print("newXy2 ", newXy2)
-        #     X_transposed2 = np.transpose(newXy2)
-        #     # print("X_transposed2s ", X_transposed2)
-        #     branchMostInfo = self.featureInfo(newXy2,X_transposed2,branchMostInfo,DTstructure,DTinfoGain)
-        # print(DTstructure)
-        # print(DTinfoGain)
+        #Place column means in the indices. Align the arrays using take
+        X[inds] = np.take(np.array(col_new_val), inds[1])
+        self.MakeThree(X, y)
         return self
 
     def MakeThree(self, X,y):
@@ -87,7 +70,6 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             splitGroups.append(nd)
         for nd in node['groupsValues']:
             splitGroupsValues.append(nd)
-
         del(node['groups'])
         del(node['groupsValues'])
         # print("splitGroups")
@@ -104,11 +86,9 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
                 # print(splitGroups[indxNode],"-----No more attributes--->>>>>")
             # return
             else:
-
                 # print(self.check)
                 # print(splitGroups[indxNode])
                 node["nodeSplit"+str(indxNode)] = self.getSplit(splitGroups[indxNode],splitGroupsValues[indxNode])
-
                 # print("THREE")
                 # print(self.three)
                 # self.check = self.check +  1
@@ -121,9 +101,13 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         splitXindxRange = group.shape[1] - 1
         labels = group[:, np.r_[splitXindxRange]]
         isSame = np.all(labels == labels[0])
+        # print((labels))
+        indice = np.random.choice(np.arange(labels.size), replace=False,
+                           size= 1)
         if isSame:
             return labels[0][0]
         else:
+            # return labels[indice][0]
             return mode
 
     def isPure(self,group):
@@ -154,9 +138,6 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
     def gainRatio(self,subinfos):
         minElement = np.amin(np.array(subinfos))
         indxs = np.where(subinfos == np.amin(subinfos))[0]
-        # print("indexes gain ratio",indxs)
-        # random_indx = np.random.choice(indxs.shape[0])
-        # random_indx = random.choice(indxs)
         random_indx = indxs[0]
         return random_indx
 
@@ -166,59 +147,29 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         totalInfo = 0
         (unique, counts) = np.unique(y, return_counts=True)
         tableClasses = np.asarray((unique, counts)).T
-        # print("tableClasses")
-        # print(tableClasses)
         for labelClass in tableClasses:
             p = labelClass[1] / len(y)
             totalInfo += -p * math.log2(p)
-        # print(totalInfo)
         return totalInfo
 
     def getUniqueClassTable(self,X_transposed, columnIndx):
         (unique, counts) = np.unique(X_transposed[columnIndx], return_counts=True)
         tableClasses = np.asarray((unique, counts)).T
-        # print("tableClass 1")
-        # print(tableClasses)
         return tableClasses
 
-    def getUniqueClassTable2(self,X_transposed, columnIndx):
-        (unique, counts) = np.unique(X_transposed[columnIndx], return_counts=True)
-        tableClasses = np.asarray((unique, counts)).T
-        print("tableclass",tableClasses)
-        if len(tableClasses) != self.counts[columnIndx]:
-            newAdded = 0
-            newArray = np.array([])
-            for indx in range(0, len(unique)):
-                if unique[indx] == newAdded:
-                    newAdded = newAdded + 1
-                else:
-                    addArray = np.asarray((newAdded,0))
-                    newArray = np.insert(tableClasses,indx,addArray)
-            print("newArray",newArray.reshape(-1,2))
-            return newArray.reshape(-1,2)
-        else:
-            return tableClasses
-        # print("tableClass 1")
-        # print(tableClasses)
-        return tableClasses
     def noMoreColumnAttributes(self,group,indx):
-        # splitXindxRange = group.shape[1] - 1
-        # X_transposed = group[:, np.r_[0:splitXindxRange]]
         isAttributeDone = True
 
         if  np.all(group[indx] == group[indx][0]):
-        # if len(self.getUniqueClassTable(X_transposed, indx)) > 1:
             isAttributeDone = True
         else:
             isAttributeDone = False
         return isAttributeDone
 
     def getSplit(self,newXy,valueNodeSplit):
-
         # print("SPLIT")
         # print("XY")
         # print(newXy)
-
         X_transposed = np.transpose(newXy)
         robject = {}
         listInformations = []
@@ -289,8 +240,6 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
         mode_labels = u[np.argmax(np.bincount(indices))]
         return mode_labels
 
-
-
     def predict(self, X):
         """ Predict all classes for a dataset X
 
@@ -301,6 +250,14 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
             array, shape (n_samples,)
                 Predicted target values per element in X.
         """
+        inds = np.where(np.isnan(X))
+        col_mean = np.nanmean(X, axis=0)
+        col_new_val = []
+        for col in col_mean:
+            col_new_val.append(-1)
+
+        #Place column means in the indices. Align the arrays using take
+        X[inds] = np.take(np.array(col_new_val), inds[1])
         labelsPred = []
         for row in X:
             pred_label = self.predictOneRow(row,self.three)
