@@ -2,13 +2,13 @@
 %
 %2. Source Information
 %   -- Creator: Richard Forsyth
-%   -- Donor: Richard S. Forsyth 
+%   -- Donor: Richard S. Forsyth
 %             8 Grosvenor Avenue
 %             Mapperley Park
 %             Nottingham NG3 5DX
 %             0602-621676
 %   -- Date: 5/15/1990
-% 
+%
 %3. Past Usage:
 %   -- None known other than what is shown in Forsyth's PC/BEAGLE User's Guide.
 %
@@ -30,10 +30,10 @@
 %           2 (20) chicken, crow, dove, duck, flamingo, gull, hawk,
 %                  kiwi, lark, ostrich, parakeet, penguin, pheasant,
 %                  rhea, skimmer, skua, sparrow, swan, vulture, wren
-%           3 (5)  pitviper, seasnake, slowworm, tortoise, tuatara 
+%           3 (5)  pitviper, seasnake, slowworm, tortoise, tuatara
 %           4 (13) bass, carp, catfish, chub, dogfish, haddock,
 %                  herring, pike, piranha, seahorse, sole, stingray, tuna
-%           5 (4)  frog, frog, newt, toad 
+%           5 (4)  frog, frog, newt, toad
 %           6 (8)  flea, gnat, honeybee, housefly, ladybird, moth, termite, wasp
 %           7 (10) clam, crab, crayfish, lobster, octopus,
 %                  scorpion, seawasp, slug, starfish, worm
@@ -79,7 +79,7 @@
 @Attribute breathes  {F,T}
 @Attribute venomous  {F,T}
 @Attribute fins  {F,T}
-@Attribute legs  {1,2,4,5,6,8}
+@Attribute legs  {0,2,4,5,6,8}
 @Attribute tails  {F,T}
 @Attribute domestic  {F,T}
 @Attribute catsize  {F,T}
