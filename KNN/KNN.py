@@ -12,7 +12,8 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         """
         self.columntype = columntype #Note This won't be needed until part 5
         self.weight_type = weight_type
-
+        self.X = None
+        self.y = None
 
 
     def fit(self,data,labels):
@@ -23,6 +24,9 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         Returns:
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
         """
+        self.X = data
+        self.y = labels
+        
         return self
     def predict(self,data):
         """ Predict all classes for a dataset X
@@ -35,16 +39,14 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         pass
 
     #Returns the Mean score given input data and labels
-		def score(self, X, y):
-				""" Return accuracy of model on a given dataset. Must implement own score function.
-				Args:
-						X (array-like): A 2D numpy array with data, excluding targets
-						y (array-like): A 2D numpy array with targets
-				Returns:
-						score : float
-								Mean accuracy of self.predict(X) wrt. y.
-				"""
+	def score(self, X, y):
+			""" Return accuracy of model on a given dataset. Must implement own score function.
+			Args:
+					X (array-like): A 2D numpy array with data, excluding targets
+					y (array-like): A 2D numpy array with targets
+			Returns:
+					score : float
+							Mean accuracy of self.predict(X) wrt. y.
+			"""
 
-				return 0
-
-
+			return 0
