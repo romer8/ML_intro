@@ -8,7 +8,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 class KNNClassifier(BaseEstimator,ClassifierMixin):
 
 
-    def __init__(self,columntype=[],weight_type='inverse_distance'): ## add parameters here
+    def __init__(self,columntype=[], labelType = 'classification', weight_type='inverse_distance', k = 3): ## add parameters here
         """
         Args:
             columntype for each column tells you if continues[real] or if nominal[categoritcal].
@@ -16,7 +16,8 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         """
         self.columntype = columntype #Note This won't be needed until part 5
         self.weight_type = weight_type
-        self.labelType = None
+        self.labelType = labelType
+        self.k = k
         self.X = None
         self.y = None
 
@@ -42,39 +43,17 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
                 Predicted target values per element in X.
         """
 
-        predictions = []
+        preds = []
         if self.labelType == "classification":
             if 'nominal' in self.columntype:
                 pass
             else:
-                # newShapeLabel = self.y.reshape(self.y.shape[0],)
-                uniqueLabels = np.unique(self.y)
-                for xdata in data:
-                    listSumVotes = []
-                    distances = []
-                    ## getting distances
-                    for x in self.X:
-                        summation = np.add(x,xdata)
-                        summationSquare = np.square(summation)
-                        totalSummation = np.sum(summationSquare)
-                        totalSummationSquareRoot = sqrt(totalSummation)
-                        if self.weight_type =='inverse_distance':
-                            totalSummationSquareRoot = 1 / (totalSummationSquareRoot)**2
-                        distances.append(totalSummationSquareRoot)
-                    ## classificando las labels
-                    for yunique in uniqueLabels:
-                        listfeature = []
-                        for index in range(0,len(self.y)):
-                            if self.y[index][0] == yunique:
-                                listfeature.append(distances[index])
-                        total = np.sum(np.array(listfeature))
-                        listSumVotes.append(total)
-
-                    indx, value = max(enumerate(listSumVotes), key=operator.itemgetter(1))
-                    predictions.append(uniqueLabels[indx])
-
-
-        return predictions
+                newXY= np.concatenate((self.X, self.y), axis = 1).tolist()
+                # print(newXY)
+                for dataX in data:
+                    prediction = self.predict_classification(newXY,dataX)
+                    preds.append(prediction)
+        return preds
     def hotEncoder(self, feature):
         enc = OneHotEncoder()
         enc.fit(feature)
@@ -87,7 +66,45 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
             return 0
         else:
             return math.sqrt(2)
+    # calculate the Euclidean distance between two vectors
+    def euclidean_distance(self,row1, row2):
+        distance = 0.0
+        for i in range(0,len(row1)):
+            distance += (row1[i] - row2[i])**2
+            # print(row1[i], row2[i],(row1[i] - row2[i])**2)
+        return math.sqrt(distance)
 
+    def weighting_criteria(self,distance):
+        if self.weight_type == 'inverse_distance':
+            distance_invert = 1/ distance**2
+            return distance_invert
+        else:
+            return distance
+
+    def get_neighbors(self,train, test_row):
+        distances = list()
+        ds = []
+        for train_row in train:
+            dist = self.euclidean_distance(test_row, train_row)
+            dist2 = self.weighting_criteria(dist)
+            distances.append((train_row, dist2))
+            ds.append(dist2)
+        # print(ds)
+        distances.sort(key=lambda tup: tup[1], reverse=True)
+        ds.sort()
+        # print(distances)
+        # print(ds)
+        neighbors = list()
+        for i in range(self.k):
+            neighbors.append(distances[i][0])
+        print(neighbors)
+        return neighbors
+
+    def predict_classification(self,train, test_row):
+        neighbors = self.get_neighbors(train, test_row)
+        output_values = [row[-1] for row in neighbors]
+        prediction = max(set(output_values), key=output_values.count)
+        return prediction
     #Returns the Mean score given input data and labels
     def score(self, X, y):
         """ Return accuracy of model on a given dataset. Must implement own score function.
@@ -99,11 +116,15 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         				Mean accuracy of self.predict(X) wrt. y.
         """
         preds = self.predict(X)
+        print(preds)
         y_reshaped = y.reshape(y.shape[0],)
+        print(y_reshaped)
+
         matches = []
-        for indx in range(0,len(predicted_labels)):
-            if y_reshaped[indx] == predicted_labels[indx]:
+        for indx in range(0,len(preds)):
+            if y_reshaped[indx] == preds[indx]:
                 matches.append(indx)
-        accuracy = len(matches)/len(y)
+        # print(matches)
+        accuracy = len(matches)/len(y_reshaped)
 
         return accuracy
