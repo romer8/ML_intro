@@ -11,9 +11,11 @@ from sklearn import preprocessing
 from KNN import KNNClassifier
 from sklearn.neighbors import KNeighborsRegressor, NearestNeighbors,KNeighborsClassifier
 from distython import HEOM
+from sklearn.metrics import mean_squared_error
+from sklearn.datasets import load_boston
+from sklearn.preprocessing import scale
 # print("*******************PART 1************************************")
 # print("*******************DEBUG************************************")
-#
 # arff_path_train = r"training/seismic-bumps_train.arff"
 # arff_path_test = r"training/seismic-bumps_test.arff"
 # mat = arff.Arff(arff_path_train)
@@ -55,10 +57,16 @@ from distython import HEOM
 # KNN = KNNClassifier(columntype= arrayTypes, labelType ='classification' ,weight_type='inverse_distance',k=3)
 # KNN.fit(train_data,train_labels)
 # pred = KNN.predict(test_data)
-# score = KNN.score(test_data,test_labels)
-# # np.savetxt("diabetes-prediction.csv",pred,delimiter=',',fmt="%i")
-# print("Score",score)
 #
+# score = KNN.score(test_data,test_labels)
+# np.savetxt("diabetes-prediction.csv",pred,delimiter=',',fmt="%i")
+# print("Score",score)
+# # neigh = KNeighborsClassifier(n_neighbors=3)
+# # neigh.fit(train_data,train_labels)
+# # pred2 = neigh.predict(test_data)
+# # np.savetxt("diabetes-prediction2.csv",pred,delimiter=',',fmt="%i")
+
+
 # print("*******************PART 2************************************")
 #
 # arff_path_train = r"training/magic_training.arff"
@@ -141,6 +149,7 @@ from distython import HEOM
 # train_data_norm = normalization.normalizeData(train_data)
 # # train_data_norm = scaler.fit_transform(train_data)
 # train_labels = mat.data[:,-1].reshape(-1,1)
+# train_labels_norm = normalization.normalizeData(train_labels)
 #
 #
 # test_data = mat2.data[:,0:-1]
@@ -148,11 +157,12 @@ from distython import HEOM
 # # test_data_norm = scaler.fit_transform(test_data)
 #
 # test_labels = mat2.data[:,-1].reshape(-1,1)
+# test_labels_norm = normalization.normalizeData(test_labels)
 #
 # KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='no_weight',k=3)
-# KNN.fit(train_data_norm,train_labels)
+# KNN.fit(train_data_norm,train_labels_norm)
 # pred = KNN.predict(test_data_norm)
-# score = KNN.score(test_data_norm,test_labels)
+# score = KNN.score(test_data_norm,test_labels_norm)
 # print("Score",score)
 # # neigh = KNeighborsRegressor(n_neighbors=3)
 # # neigh.fit(train_data_norm, train_labels)
@@ -163,9 +173,9 @@ from distython import HEOM
 # arrayK = []
 # for a in range(1, 17, 2):
 #     KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='no_weight',k=a)
-#     KNN.fit(train_data_norm,train_labels)
+#     KNN.fit(train_data_norm,train_labels_norm)
 #     # pred = KNN.predict(test_data_norm)
-#     score = KNN.score(test_data_norm,test_labels)
+#     score = KNN.score(test_data_norm,test_labels_norm)
 #     arrayScores.append(score)
 #     arrayK.append(a)
 #     print("K = ",a,score)
@@ -247,29 +257,35 @@ from distython import HEOM
 # mat2 = arff.Arff(arff_path_test)
 # arrayTypes = mat.attr_types
 # del arrayTypes[-1]
+# scaler = preprocessing.MinMaxScaler()
 #
 # train_data = mat.data[:,0:-1]
 # train_data_norm = normalization.normalizeData(train_data)
+# # train_data_norm = scaler.fit_transform(train_data)
 # train_labels = mat.data[:,-1].reshape(-1,1)
+# train_labels_norm = normalization.normalizeData(train_labels)
 #
 #
 # test_data = mat2.data[:,0:-1]
 # test_data_norm = normalization.normalizeData(test_data)
+# # test_data_norm = scaler.fit_transform(test_data)
+#
 # test_labels = mat2.data[:,-1].reshape(-1,1)
+# test_labels_norm = normalization.normalizeData(test_labels)
 #
 # KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='inverse_distance',k=3)
-# KNN.fit(train_data_norm,train_labels)
-# # pred = KNN.predict(test_data_norm)
-# score = KNN.score(test_data_norm,test_labels)
-# print("Score ",score)
+# KNN.fit(train_data_norm,train_labels_norm)
+# pred = KNN.predict(test_data_norm)
+# score = KNN.score(test_data_norm,test_labels_norm)
+# print("Score",score)
 #
 # arrayScores = []
 # arrayK = []
 # for a in range(1, 17, 2):
 #     KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='inverse_distance',k=a)
-#     KNN.fit(train_data_norm,train_labels)
+#     KNN.fit(train_data_norm,train_labels_norm)
 #     # pred = KNN.predict(test_data_norm)
-#     score = KNN.score(test_data_norm,test_labels)
+#     score = KNN.score(test_data_norm,test_labels_norm)
 #     arrayScores.append(score)
 #     arrayK.append(a)
 #     print("K = ",a,score)
@@ -366,7 +382,7 @@ from distython import HEOM
 #
 # fig, ax = plt.subplots()
 # ax.bar(x - width/2, arrayScores, width, label='k')
-# ax.set_ylim([0.7,0.9])
+# ax.set_ylim([0.7,1])
 #
 # # Add some text for labels, title and custom x-axis tick labels, etc.
 # ax.set_ylabel('TS Accuracy')
@@ -378,108 +394,129 @@ from distython import HEOM
 # save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/KNN/plots/kvsac5"
 # fig.savefig(save_path)
 
-print("*******************PART 6************************************")
-print(" MAGIC DATA")
-arff_path_train = r"training/magic_training.arff"
-arff_path_test = r"training/magic_test.arff"
-mat = arff.Arff(arff_path_train)
-mat2 = arff.Arff(arff_path_test)
-arrayTypes = mat.attr_types
-del arrayTypes[-1]
-arrayScores = []
+# print("*******************PART 6************************************")
+# print(" MAGIC DATA")
+# arff_path_train = r"training/magic_training.arff"
+# arff_path_test = r"training/magic_test.arff"
+# mat = arff.Arff(arff_path_train)
+# mat2 = arff.Arff(arff_path_test)
+# arrayTypes = mat.attr_types
+# del arrayTypes[-1]
+# arrayScores = []
+#
+# # print(mat.data)
+# train_data = mat.data[:,0:-1]
+# # train_data_norm = preprocessing.normalize(train_data, axis = 0, norm ='l1')
+# train_data_norm = normalization.normalizeData(train_data)
+# train_labels = mat.data[:,-1].reshape(-1,1)
+#
+# test_data = mat2.data[:,0:-1]
+# # test_data_norm = preprocessing.normalize(test_data, axis=0,norm ='l1' )
+# test_data_norm = normalization.normalizeData(test_data)
+# test_labels = mat2.data[:,-1].reshape(-1,1)
+#
+# KNN = KNNClassifier(columntype= arrayTypes, labelType ='classification' ,weight_type='inverse_distance',k=3)
+# KNN.fit(train_data_norm,train_labels)
+# # pred = KNN.predict(test_data_norm)
+# score = KNN.score(test_data_norm,test_labels)
+# arrayScores.append(score)
+# print("Score",score)
+# neigh = KNeighborsClassifier(n_neighbors=3)
+# neigh.fit(train_data_norm, train_labels)
+# skscore = neigh.score(test_data_norm,test_labels)
+# arrayScores.append(skscore)
+# arrayK = ["Mine", "sklearn"]
+# x = np.arange(len(arrayK))  # the label locations
+#
+# width = 0.35  # the width of the bars
+#
+# fig, ax = plt.subplots()
+# ax.bar(x - width/2, arrayScores, width, label='k')
+# ax.set_ylim([0.7,0.9])
+#
+# # Add some text for labels, title and custom x-axis tick labels, etc.
+# ax.set_ylabel('TS Accuracy')
+# ax.set_title('Accuracy for Different Values of "K"')
+# ax.set_xticks(x)
+# ax.set_xticklabels(arrayK)
+# ax.set_xlabel('k')
+# ax.legend()
+# save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/KNN/plots/kvsac61"
+# fig.savefig(save_path)
+#
+# print("HOUSING DATA")
+# arff_path_train = r"training/housing_training.arff"
+# arff_path_test = r"training/housing_test.arff"
+# mat = arff.Arff(arff_path_train)
+# mat2 = arff.Arff(arff_path_test)
+# arrayTypes = mat.attr_types
+# del arrayTypes[-1]
+# arrayScores = []
+# arrayK = ["Mine","sklearn"]
+# scaler = preprocessing.MinMaxScaler()
+#
+# train_data = mat.data[:,0:-1]
+# train_data_norm = normalization.normalizeData(train_data)
+# # train_data_norm = train_data
+# # train_data_norm = scaler.fit_transform(train_data)
+# train_labels = mat.data[:,-1].reshape(-1,1)
+# train_labels_norm = normalization.normalizeData(train_labels)
+# test_data = mat2.data[:,0:-1]
+# test_data_norm = normalization.normalizeData(test_data)
+# # test_data_norm = test_data
+# # test_data_norm = scaler.fit_transform(test_data)
+#
+# test_labels = mat2.data[:,-1].reshape(-1,1)
+# test_labels_norm = normalization.normalizeData(test_labels)
+#
+# KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='no_weight',k=3)
+# KNN.fit(train_data_norm,train_labels_norm)
+#
+# mse =mean_squared_error(test_labels, KNN.predict(test_data_norm))
+# print("mse+",mse)
+# score = KNN.score(test_data_norm,test_labels_norm)
+#
+# arrayScores.append(score)
+# print("Score",score)
+# neigh = KNeighborsRegressor(n_neighbors=3)
+# neigh.fit(train_data_norm, train_labels_norm)
+# preds = neigh.predict(test_data_norm)
+# mse2 = mean_squared_error(test_labels_norm, preds)
+# arrayScores.append(mse2)
+#
+# # mse = 0
+# # arraymse =[]
+# # y_reshaped = test_labels.reshape(test_labels.shape[0],)
+# # for indx in range(0,len(preds)):
+# #     mse = mse + (y_reshaped[indx] - preds[indx])**2
+# #     # print((y_reshaped[indx] - preds[indx])**2)
+# #     arraymse.append((y_reshaped[indx] - preds[indx])**2)
+# # accuracy = mse/len(y_reshaped)
+# #
+# # arrayScores.append(accuracy)
+# x = np.arange(len(arrayK))  # the label locations
+# width = 0.35  # the width of the bars
+#
+# fig, ax = plt.subplots()
+# ax.bar(x - width/2, arrayScores, width, label='k')
+# # ax.set_ylim([10,15])
+#
+# # Add some text for labels, title and custom x-axis tick labels, etc.
+# ax.set_ylabel('TS MSE')
+# ax.set_title('MSE for Different Values of "K"')
+# ax.set_xticks(x)
+# ax.set_xticklabels(arrayK)
+# ax.set_xlabel('k')
+# ax.legend()
+# save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/KNN/plots/kvsac62"
+# fig.savefig(save_path)
 
-# print(mat.data)
-train_data = mat.data[:,0:-1]
-# train_data_norm = preprocessing.normalize(train_data, axis = 0, norm ='l1')
-train_data_norm = normalization.normalizeData(train_data)
-train_labels = mat.data[:,-1].reshape(-1,1)
-
-
-test_data = mat2.data[:,0:-1]
-# test_data_norm = preprocessing.normalize(test_data, axis=0,norm ='l1' )
-test_data_norm = normalization.normalizeData(test_data)
-test_labels = mat2.data[:,-1].reshape(-1,1)
-KNN = KNNClassifier(columntype= arrayTypes, labelType ='classification' ,weight_type='inverse_distance',k=3)
-KNN.fit(train_data_norm,train_labels)
-# pred = KNN.predict(test_data_norm)
-score = KNN.score(test_data_norm,test_labels)
-arrayScores.append(score)
-print("Score",score)
-neigh = KNeighborsClassifier(n_neighbors=3)
-neigh.fit(train_data_norm, train_labels)
-skscore = neigh.score(test_data_norm,test_labels)
-arrayScores.append(skscore)
-arrayK = ["Mine", "sklearn"]
-x = np.arange(len(arrayK))  # the label locations
-
-width = 0.35  # the width of the bars
-
-fig, ax = plt.subplots()
-ax.bar(x - width/2, arrayScores, width, label='k')
-ax.set_ylim([0.7,0.9])
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax.set_ylabel('TS Accuracy')
-ax.set_title('Accuracy for Different Values of "K"')
-ax.set_xticks(x)
-ax.set_xticklabels(arrayK)
-ax.set_xlabel('k')
-ax.legend()
-save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/KNN/plots/kvsac61"
-fig.savefig(save_path)
-
-print("HOUSING DATA")
-arff_path_train = r"training/housing_training.arff"
-arff_path_test = r"training/housing_test.arff"
-mat = arff.Arff(arff_path_train)
-mat2 = arff.Arff(arff_path_test)
-arrayTypes = mat.attr_types
-del arrayTypes[-1]
-arrayScores = []
-arrayK = ["Mine","sklearn"]
-scaler = preprocessing.MinMaxScaler()
-
-train_data = mat.data[:,0:-1]
-train_data_norm = normalization.normalizeData(train_data)
-# train_data_norm = scaler.fit_transform(train_data)
-train_labels = mat.data[:,-1].reshape(-1,1)
-test_data = mat2.data[:,0:-1]
-test_data_norm = normalization.normalizeData(test_data)
-# test_data_norm = scaler.fit_transform(test_data)
-
-test_labels = mat2.data[:,-1].reshape(-1,1)
-
-KNN = KNNClassifier(columntype= arrayTypes, labelType ='regression' ,weight_type='no_weight',k=3)
-KNN.fit(train_data_norm,train_labels)
-score = KNN.score(test_data_norm,test_labels)
-arrayScores.append(score)
-print("Score",score)
-neigh = KNeighborsRegressor(n_neighbors=3)
-neigh.fit(train_data_norm, train_labels)
-preds = neigh.predict(test_data_norm)
-
-mse = 0
-arraymse =[]
-y_reshaped = test_labels.reshape(test_labels.shape[0],)
-for indx in range(0,len(preds)):
-    mse = mse + (y_reshaped[indx] - preds[indx])**2
-    # print((y_reshaped[indx] - preds[indx])**2)
-    arraymse.append((y_reshaped[indx] - preds[indx])**2)
-accuracy = mse/len(y_reshaped)
-arrayScores.append(accuracy)
-x = np.arange(len(arrayK))  # the label locations
-width = 0.35  # the width of the bars
-
-fig, ax = plt.subplots()
-ax.bar(x - width/2, arrayScores, width, label='k')
-ax.set_ylim([10,15])
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax.set_ylabel('TS MSE')
-ax.set_title('Accuracy for Different Values of "K"')
-ax.set_xticks(x)
-ax.set_xticklabels(arrayK)
-ax.set_xlabel('k')
-ax.legend()
-save_path="/home/elkin/university/gradSchool/Fall2020/CS472/CS472/KNN/plots/kvsac62"
-fig.savefig(save_path)
+# boston = load_boston()
+# y = boston.target
+# X = scale(boston.data)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
+#
+# knn = KNeighborsRegressor(n_neighbors=5, weights='distance', metric='minkowski', p=1)
+# knn.fit(X_train, y_train)
+# score = knn.score(X_test, y_test)
+# print("Score", score)

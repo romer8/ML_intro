@@ -47,9 +47,7 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
 
         for dataX in data:
             prediction = self.predict_classification(dataX)
-            # print(prediction)
             preds.append(prediction)
-            # print(len(preds)/total)
         return preds
 
     def weighting_criteria(self,distances):
@@ -63,12 +61,8 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
             return indices
 
     def get_neighbors(self,test_row):
-        # distances = list()
         distances = np.linalg.norm(self.X - test_row, axis=1)
         indices = self.weighting_criteria(distances)
-        # distances = self.weighting_criteria(distances)
-        # indices = np.argsort(distances)[::-1][:self.k]
-        # distances[::-1].sort()
         if self.labelType == "classification":
 
             neighbors = []
@@ -79,7 +73,6 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
                 for indx in indices:
                     if self.y[indx][0] == unq:
                         sum = sum + distances[indx]
-                    # neighbors.append(distances[indx],self.y[indx][0])
                 neighbors.append(sum)
             max = np.max(neighbors)
             result = np.where(neighbors == max)[0]
@@ -101,12 +94,8 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
 
     def predict_classification(self,test_row):
         neighbors = self.get_neighbors(test_row)
-
-        # prediction = max(set(neighbors), key=neighbors.count)
         return neighbors
-        # return neighbors
-    #Returns the Mean score given input data and labels
-    
+
     def score(self, X, y):
         """ Return accuracy of model on a given dataset. Must implement own score function.
         Args:
@@ -117,15 +106,12 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         				Mean accuracy of self.predict(X) wrt. y.
         """
         preds = self.predict(X)
-        # print(preds)
         y_reshaped = y.reshape(y.shape[0],)
-        # print(y_reshaped)
         if self.labelType == 'classification':
             matches = []
             for indx in range(0,len(preds)):
                 if y_reshaped[indx] == preds[indx]:
                     matches.append(indx)
-            # print(matches)
             accuracy = len(matches)/len(y_reshaped)
             return accuracy
 
@@ -134,9 +120,7 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
             arraymse =[]
             for indx in range(0,len(preds)):
                 mse = mse + (y_reshaped[indx] - preds[indx])**2
-                # print((y_reshaped[indx] - preds[indx])**2)
                 arraymse.append((y_reshaped[indx] - preds[indx])**2)
 
-            # print(arraymse)
             accuracy = mse/len(y_reshaped)
             return accuracy
