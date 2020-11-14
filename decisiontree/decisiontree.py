@@ -51,7 +51,9 @@ class DTClassifier(BaseEstimator,ClassifierMixin):
 
         #Place column means in the indices. Align the arrays using take
         X[inds] = np.take(np.array(col_new_val), inds[1])
+
         self.MakeThree(X, y)
+        print(self.three)
         return self
 
     def MakeThree(self, X,y):
