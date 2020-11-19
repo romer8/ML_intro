@@ -22,7 +22,7 @@ class HACClustering(BaseEstimator,ClusterMixin):
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
         """
         # print(X)
-        distancesMatrix = self._getDistancesMatrix(X,1)
+        distancesMatrix = self._getDistancesMatrix(X,2)
         distanceLowerTriangle = np.tril(distancesMatrix, -1)
         initialLevel = 0
         self.clusterDict = {initialLevel:{}}
@@ -35,12 +35,15 @@ class HACClustering(BaseEstimator,ClusterMixin):
         while numClusters > self.k:
             if len(distanceLowerTriangle) > 2:
                 print("ITERATION",i, numClusters)
+                # print(distanceLowerTriangle)
                 distanceLowerTriangle[distanceLowerTriangle <= 0 ] = np.inf
                 minVal,rowIndex,colIndex = self.typeLinkDistance(distanceLowerTriangle)
                 distanceLowerTriangle[distanceLowerTriangle == np.inf ] = 0
-
+                print("MIN VALUE")
+                large_width = 400
+                np.set_printoptions(linewidth=large_width,precision=4)
                 print(minVal,rowIndex,colIndex) ## DELETE
-                # print(np.around(distanceLowerTriangle,decimals = 4))## DELETE
+                print(np.around(distanceLowerTriangle,decimals = 4))## DELETE
 
                 valMin = min(rowIndex,colIndex)
                 valMax = max(rowIndex,colIndex)
@@ -54,7 +57,7 @@ class HACClustering(BaseEstimator,ClusterMixin):
 
                 # return
                 # print(newClusterValues)#### DELETE
-                # print(self.clusterDict[initialLevel]) #### DELETE
+                print(self.clusterDict[initialLevel]) #### DELETE
 
 
             i= i +1
@@ -127,7 +130,7 @@ class HACClustering(BaseEstimator,ClusterMixin):
         distanceLowerTriangle2 = np.transpose(distanceLowerTriangle2)
         # print(distanceLowerTriangle2)
         distanceLowerTriangle2 = np.tril(distanceLowerTriangle2, -1)
-        # print(distanceLowerTriangle2)
+        print(distanceLowerTriangle2)
         newDistanceLowerTriangle = distanceLowerTriangle2
         # print("####################################")
 
@@ -148,10 +151,13 @@ class HACClustering(BaseEstimator,ClusterMixin):
         # print(rowList2)
         valToHaveZero = min(rowIndex,colIndex)
         valToDelete = max(rowIndex,colIndex)
-
+        print("FIRST HALF")
         rl = np.add(rowList1,rowList2)
         # rl = np.delete(rl,[rowIndex,colIndex])
+        print(rl)
+        print("SECOND HALF")
         rl2 = np.add(colList1,colList2)
+        print(rl2)
         # rl2 = np.delete(rl2,[rowIndex,colIndex])
 
         # print(rl)
@@ -165,6 +171,8 @@ class HACClustering(BaseEstimator,ClusterMixin):
             # rl_final = rl3[rl3 != 0]
             # print(rl_final)
             # return rl_final
+            print("NEW VALUES TO REPLACE")
+            print(rl3)
             return rl3
         if self.link_type =='complete':
             rl3 = np.maximum(rl, rl2)
