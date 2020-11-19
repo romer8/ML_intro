@@ -11,7 +11,8 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         """
         self.k = k
         self.debug = debug
-
+        self.clusterDict = {}
+        self.clustersCentroids = []
     def fit(self,X,y=None):
         """ Fit the data; In this lab this will make the K clusters :D
         Args:
@@ -20,10 +21,98 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         Returns:
             self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
         """
+        self._initCentroidDictAndCentroids(X)
+        totalSSEDifference = 10
+        iterations = 0
+        while totalSSEDifference > 0.001:
+            print("***************ITERATION ", iterations, "************")
+            totalSSE_before = 1000
+            if iterations > 0:
+                totalSSE_before = self._totalClusterSSE(X)
+
+            for indx in range(0, len(X)):
+                self._getKmeanFit(X,X[indx],indx)
+            totalSSE_after = self._totalClusterSSE(X)
+            print(totalSSE_after)
+            totalSSEDifference = abs(totalSSE_after- totalSSE_before)
+            # print(self.clusterDict)
+            print(self._printClustersLength())
+
+            print("TOTAL_SSE", totalSSEDifference)
+            iterations += 1
+        print(self._printClustersLength())
         return self
+
+    def _initCentroidDictAndCentroids(self,X):
+        for i in range(0, self.k):
+            # self.clusterDict[i] = [i]
+            self.clusterDict[i] = []
+        print(self.clusterDict)
+        if self.debug is True:
+            for clusterIndx in range(0, self.k):
+                self.clustersCentroids.append(X[clusterIndx])
+        print(self.clustersCentroids)
+        return
+
+    def _getClusterSSE(self, indexCluster,X):
+        # print(np.array(self.clusterDict[indexCluster]))
+        clusterVals = self._getClusters(X, indexCluster)
+        # print(self.clustersCentroids[indexCluster])
+        distances = np.linalg.norm(np.array(clusterVals) - self.clustersCentroids[indexCluster], axis=1)
+        distances = np.square(distances)
+        SSE =np.sum(distances)
+        return SSE
+
+    def _totalClusterSSE(self,X):
+        totalSSE = 0
+        for indx in range(self.k):
+            totalSSE = totalSSE + self._getClusterSSE(indx,X)
+        return totalSSE
+
+    def _getKmeanFit(self,X,Xval,XIndex):
+        indexMinDistance =  self._getClusterDistances(Xval,self.clustersCentroids)
+        newCentroid = self._getAllClusterCentroidUpdate(X,XIndex, indexMinDistance)
+        self.clustersCentroids[indexMinDistance] = newCentroid
+        return
+
+    def _getAllClusterCentroidUpdate(self,X,Xindex, indexCluster):
+        for i in range(len(list(self.clusterDict.keys()))):
+            if indexCluster == i:
+                if Xindex not in self.clusterDict[indexCluster]:
+                    self.clusterDict[indexCluster].append(Xindex)
+            else:
+                if Xindex in self.clusterDict[i]:
+                    self.clusterDict[i].remove(Xindex)
+
+        # print("iupdate the clusterDict", self.clusterDict[indexCluster])
+        clusterVals = self._getClusters(X, indexCluster)
+
+        newCentroid = np.mean(clusterVals, axis=0)
+        # print("new centroid", newCentroid)
+        return newCentroid
+
+    def _getClusterDistances(self, Xval, clusterCentroids):
+
+        # print("primer",np.array(clusterCentroids).shape, Xval.shape)
+        # print(np.array(clusterCentroids))
+        distances = np.linalg.norm(np.array(clusterCentroids) - Xval, axis=1)
+        minVal = np.min(distances)
+        minValIndexes = np.argwhere(distances == minVal)[0]
+        return minValIndexes[0]
+
+    def _getClusters(self, X, indx):
+        listVals = []
+        for clusterIndx in self.clusterDict[indx]:
+            listVals.append(X[clusterIndx])
+        return listVals
+    def _printClustersLength(self):
+        listLenght = {}
+        for i in range(len(list(self.clusterDict.keys()))):
+            listLenght[i] = len(self.clusterDict[i])
+        return listLenght
     def save_clusters(self,filename):
         """
-            f = open(filename,"w+") 
+            f = open(filename,"w+")
             Used for grading.
             write("{:d}\n".format(k))
             write("{:.4f}\n\n".format(total SSE))
