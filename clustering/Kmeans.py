@@ -32,18 +32,20 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
 
             for indx in range(0, len(X)):
                 self._getKmeanFit(X,X[indx],indx)
+            self._updateCentroid(X)
             totalSSE_after = self._totalClusterSSE(X)
-            print(totalSSE_after)
+            # print(totalSSE_after)
             totalSSEDifference = abs(totalSSE_after- totalSSE_before)
             # print(self.clusterDict)
             print(self._printClustersLength())
 
-            print("TOTAL_SSE", totalSSEDifference)
+            print("TOTAL_SSE",totalSSE_before,totalSSE_after, totalSSEDifference)
             iterations += 1
         print(self._printClustersLength())
         return self
 
     def _initCentroidDictAndCentroids(self,X):
+        print(np.random.choice(len(X), self.k))
         for i in range(0, self.k):
             # self.clusterDict[i] = [i]
             self.clusterDict[i] = []
@@ -51,6 +53,11 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         if self.debug is True:
             for clusterIndx in range(0, self.k):
                 self.clustersCentroids.append(X[clusterIndx])
+        else:
+            indixes = np.random.choice(len(X), self.k)
+            for clusterIndx in range(0, indixes):
+                self.clustersCentroids.append(X[clusterIndx])
+
         print(self.clustersCentroids)
         return
 
@@ -70,9 +77,8 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         return totalSSE
 
     def _getKmeanFit(self,X,Xval,XIndex):
-        indexMinDistance =  self._getClusterDistances(Xval,self.clustersCentroids)
-        newCentroid = self._getAllClusterCentroidUpdate(X,XIndex, indexMinDistance)
-        self.clustersCentroids[indexMinDistance] = newCentroid
+        indexMinDistance =  self._getClusterDistances(Xval)
+        self._getAllClusterCentroidUpdate(X,XIndex, indexMinDistance)
         return
 
     def _getAllClusterCentroidUpdate(self,X,Xindex, indexCluster):
@@ -83,19 +89,19 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
             else:
                 if Xindex in self.clusterDict[i]:
                     self.clusterDict[i].remove(Xindex)
-
-        # print("iupdate the clusterDict", self.clusterDict[indexCluster])
-        clusterVals = self._getClusters(X, indexCluster)
-
-        newCentroid = np.mean(clusterVals, axis=0)
-        # print("new centroid", newCentroid)
-        return newCentroid
-
-    def _getClusterDistances(self, Xval, clusterCentroids):
+        return
+    def _updateCentroid(self,X):
+        for i in range(0,len(self.clustersCentroids)):
+            clusterVals = self._getClusters(X, i)
+            self.clustersCentroids[i] = np.mean(clusterVals, axis=0)
+        return
+    def _getClusterDistances(self, Xval):
 
         # print("primer",np.array(clusterCentroids).shape, Xval.shape)
         # print(np.array(clusterCentroids))
-        distances = np.linalg.norm(np.array(clusterCentroids) - Xval, axis=1)
+        # print("my Xval")
+        # print(Xval)
+        distances = np.linalg.norm(np.array(self.clustersCentroids) - Xval, axis=1)
         minVal = np.min(distances)
         minValIndexes = np.argwhere(distances == minVal)[0]
         return minValIndexes[0]
