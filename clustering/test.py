@@ -26,20 +26,18 @@ data = raw_data
 scaler = preprocessing.MinMaxScaler()
 scaler.fit(data)
 norm_data = scaler.transform(data)
-
-# norm_data = np.array([[185,72],[170,56],[168,60],[179,68],[182,72],[188,77]])
 ### KMEANS ###
 KMEANS = Kmeans.KMEANSClustering(k=5,debug=True)
 KMEANS.fit(norm_data)
 KMEANS.save_clusters("debug_kmeans.txt")
 
-### HAC SINGLE LINK ###
-# HAC_single = HAC.HACClustering(k=5,link_type='single')
-# HAC_single.fit(norm_data)
-# HAC_single.save_clusters("debug_hac_single.txt")
+## HAC SINGLE LINK ###
+HAC_single = HAC.HACClustering(k=5,link_type='single')
+HAC_single.fit(norm_data)
+HAC_single.save_clusters("debug_hac_single.txt")
 
-### HAC COMPLETE LINK ###
-# HAC_complete = HAC.HACClustering(k=5,link_type='complete')
-# HAC_complete.fit(norm_data)
-# HAC_complete.save_clusters("debug_hac_complete.txt")
+## HAC COMPLETE LINK ###
+HAC_complete = HAC.HACClustering(k=5,link_type='complete')
+HAC_complete.fit(norm_data)
+HAC_complete.save_clusters("debug_hac_complete.txt")
 # clustering = AgglomerativeClustering(n_clusters = 5, linkage= 'single').fit(norm_data)
