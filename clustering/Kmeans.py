@@ -13,6 +13,8 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         self.debug = debug
         self.clusterDict = {}
         self.clustersCentroids = []
+        self.totalSSE = 1
+        self.clustersSSE = []
     def fit(self,X,y=None):
         """ Fit the data; In this lab this will make the K clusters :D
         Args:
@@ -34,6 +36,7 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
                 self._getKmeanFit(X,X[indx],indx)
             self._updateCentroid(X)
             totalSSE_after = self._totalClusterSSE(X)
+            self.totalSSE = totalSSE_after
             # print(totalSSE_after)
             totalSSEDifference = abs(totalSSE_after- totalSSE_before)
             # print(self.clusterDict)
@@ -41,6 +44,7 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
 
             print("TOTAL_SSE",totalSSE_before,totalSSE_after, totalSSEDifference)
             iterations += 1
+        self.clustersSSE = self._totalClusterSSEArray(X)
         print(self._printClustersLength())
         return self
 
@@ -69,7 +73,11 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         distances = np.square(distances)
         SSE =np.sum(distances)
         return SSE
-
+    def _totalClusterSSEArray(self,X):
+        totalSSE = []
+        for indx in range(self.k):
+            totalSSE.append(self._getClusterSSE(indx,X))
+        return totalSSE
     def _totalClusterSSE(self,X):
         totalSSE = 0
         for indx in range(self.k):
@@ -96,11 +104,6 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
             self.clustersCentroids[i] = np.mean(clusterVals, axis=0)
         return
     def _getClusterDistances(self, Xval):
-
-        # print("primer",np.array(clusterCentroids).shape, Xval.shape)
-        # print(np.array(clusterCentroids))
-        # print("my Xval")
-        # print(Xval)
         distances = np.linalg.norm(np.array(self.clustersCentroids) - Xval, axis=1)
         minVal = np.min(distances)
         minValIndexes = np.argwhere(distances == minVal)[0]
@@ -116,16 +119,16 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         for i in range(len(list(self.clusterDict.keys()))):
             listLenght[i] = len(self.clusterDict[i])
         return listLenght
+
     def save_clusters(self,filename):
-        """
-            f = open(filename,"w+")
-            Used for grading.
-            write("{:d}\n".format(k))
-            write("{:.4f}\n\n".format(total SSE))
-            for each cluster and centroid:
-                write(np.array2string(centroid,precision=4,separator=","))
-                write("\n")
-                write("{:d}\n".format(size of cluster))
-                write("{:.4f}\n\n".format(SSE of cluster))
-            f.close()
-        """
+        f = open(filename,"w+")
+        # Used for grading.
+        f.write("{:d}\n".format(self.k))
+        f.write("{:.4f}\n\n".format(self.totalSSE))
+        # for each cluster and centroid:
+        for i in range(self.k):
+            f.write(np.array2string(self.clustersCentroids[i],precision=4,separator=","))
+            f.write("\n")
+            f.write("{:d}\n".format(len(self.clusterDict[i])))
+            f.write("{:.4f}\n\n".format(self.clustersSSE[i]))
+        f.close()
