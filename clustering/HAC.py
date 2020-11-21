@@ -13,6 +13,7 @@ class HACClustering(BaseEstimator,ClusterMixin):
         self.k = k
         self.clusterDict = {}
         self.output = []
+        self.totalSSE = 0
     def fit(self,X,y=None):
         """ Fit the data; In this lab this will make the K clusters :D
         Args:
@@ -127,7 +128,8 @@ class HACClustering(BaseEstimator,ClusterMixin):
             centroid_ = self._getClusterCentroid(X,self.clusterDict[level][clusterIndx])
             clusterSize = self._getSizeCluster(self.clusterDict[level][clusterIndx])
             SSE = self._getClusterSSE(X,self.clusterDict[level][clusterIndx],centroid_)
-            arrayOut.append([np.around(centroid_,decimals=4),clusterSize,SSE])
+            self.totalSSE = self.totalSSE + SSE
+            arrayOut.append([centroid_,clusterSize,SSE])
         return arrayOut
 
     def _getClusterCentroid(self,X, clusterArray):
@@ -156,15 +158,14 @@ class HACClustering(BaseEstimator,ClusterMixin):
         return matrix_distance
 
     def save_clusters(self,filename):
-        """
-            f = open(filename,"w+")
-            Used for grading.
-            write("{:d}\n".format(k))
-            write("{:.4f}\n\n".format(total SSE))
-            for each cluster and centroid:
-                write(np.array2string(centroid,precision=4,separator=","))
-                write("\n")
-                write("{:d}\n".format(size of cluster))
-                write("{:.4f}\n\n".format(SSE of cluster))
-            f.close()
-        """
+        f = open(filename,"w+")
+        # Used for grading.
+        f.write("{:d}\n".format(self.k))
+        f.write("{:.4f}\n\n".format(self.totalSSE))
+        # for each cluster and centroid:
+        for cluster in self.output:
+            f.write(np.array2string(cluster[0],precision=4,separator=","))
+            f.write("\n")
+            f.write("{:d}\n".format(cluster[1]))
+            f.write("{:.4f}\n\n".format(cluster[2]))
+        f.close()
