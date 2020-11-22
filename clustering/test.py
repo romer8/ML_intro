@@ -82,36 +82,36 @@ def graphsSSE(type,norm_data,file_name):
     save_path = save_path + file_name
     fig.savefig(save_path)
 
-# arff_path_train = r"training/iris.arff"
-# mat = arff.Arff(arff_path_train,label_count=0)
-# raw_data = mat.data
-# data = raw_data
+arff_path_train = r"training/iris.arff"
+mat = arff.Arff(arff_path_train,label_count=0)
+raw_data = mat.data
+data = raw_data
 # data = data[...,:-1]
-# scaler = preprocessing.MinMaxScaler()
-# scaler.fit(data)
-# norm_data = scaler.transform(data)
-# ### KMEANS ###
-# graphsSSE('k_means',norm_data,'kmeansSSE')
-# ## HAC SINGLE LINK ###
-# graphsSSE('single',norm_data,'HACsinlgesSSE')
-# ## HAC COMPLETE LINK ###
-# graphsSSE('complete',norm_data,'HACcompletesSSE')
+scaler = preprocessing.MinMaxScaler()
+scaler.fit(data)
+norm_data = scaler.transform(data)
+### KMEANS ###
+graphsSSE('k_means',norm_data,'kmeansSSE')
+## HAC SINGLE LINK ###
+graphsSSE('single',norm_data,'HACsinlgesSSE')
+## HAC COMPLETE LINK ###
+graphsSSE('complete',norm_data,'HACcompletesSSE')
 #
-# # including last output column
-# arff_path_train = r"training/iris.arff"
-# mat = arff.Arff(arff_path_train,label_count=0)
-# raw_data = mat.data
-# data = raw_data
-# data = data[...,:-1]
-# scaler = preprocessing.MinMaxScaler()
-# scaler.fit(data)
-# norm_data = scaler.transform(data)
-# ### KMEANS ###
-# graphsSSE('k_means',norm_data,'kmeansSSE2')
-# ## HAC SINGLE LINK ###
-# graphsSSE('single',norm_data,'HACsinlgesSSE2')
-# ## HAC COMPLETE LINK ###
-# graphsSSE('complete',norm_data,'HACcompletesSSE2')
+# including last output column
+arff_path_train = r"training/iris.arff"
+mat = arff.Arff(arff_path_train,label_count=0)
+raw_data = mat.data
+data = raw_data
+data = data[...,:-1]
+scaler = preprocessing.MinMaxScaler()
+scaler.fit(data)
+norm_data = scaler.transform(data)
+### KMEANS ###
+graphsSSE('k_means',norm_data,'kmeansSSE2')
+## HAC SINGLE LINK ###
+graphsSSE('single',norm_data,'HACsinlgesSSE2')
+## HAC COMPLETE LINK ###
+graphsSSE('complete',norm_data,'HACcompletesSSE2')
 
 ## final running k-5 4 different times
 # arff_path_train = r"training/iris.arff"
@@ -332,48 +332,48 @@ print("*******************PART 3************************************")
 #     plt.savefig(save_path)
 
 ## METRICS TABLE ##
-arff_path_train = r"training/iris.arff"
-mat = arff.Arff(arff_path_train,label_count=0)
-raw_data = mat.data
-data = raw_data
-labels = data[:, -1]
-data = data[...,:-1]
-scaler = preprocessing.MinMaxScaler()
-scaler.fit(data)
-norm_data = scaler.transform(data)
-
-n_digits = len(np.unique(labels))
-def bench_k_means(estimator, name, data):
-    t0 = time()
-    estimator.fit(data)
-    print('%-9s\t%.2fs\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f'
-          % (name, (time() - t0), estimator.inertia_,
-             metrics.homogeneity_score(labels, estimator.labels_),
-             metrics.completeness_score(labels, estimator.labels_),
-             metrics.v_measure_score(labels, estimator.labels_),
-             metrics.adjusted_rand_score(labels, estimator.labels_),
-             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
-             metrics.silhouette_score(data, estimator.labels_,
-                                      metric='euclidean'
-                                      )))
-
-bench_k_means(KMeans(init='k-means++', n_clusters=n_digits),
-              name="k-means++", data=norm_data)
-
-## DIFFERENT DATASET
-# create dataset
-X, y = make_blobs(
-   n_samples=150, n_features=2,
-   centers=3, cluster_std=0.5,
-   shuffle=True, random_state=0
-)
-
-km = KMeans(
-    n_clusters=3, init='random',
-    max_iter=300,
-    tol=1e-04
-)
-y_km = km.fit_predict(X)
-print(y_km)
-HAC = AgglomerativeClustering(n_clusters=3).fit_predict(X)
-print(HAC)
+# arff_path_train = r"training/iris.arff"
+# mat = arff.Arff(arff_path_train,label_count=0)
+# raw_data = mat.data
+# data = raw_data
+# labels = data[:, -1]
+# data = data[...,:-1]
+# scaler = preprocessing.MinMaxScaler()
+# scaler.fit(data)
+# norm_data = scaler.transform(data)
+#
+# n_digits = len(np.unique(labels))
+# def bench_k_means(estimator, name, data):
+#     t0 = time()
+#     estimator.fit(data)
+#     print('%-9s\t%.2fs\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f'
+#           % (name, (time() - t0), estimator.inertia_,
+#              metrics.homogeneity_score(labels, estimator.labels_),
+#              metrics.completeness_score(labels, estimator.labels_),
+#              metrics.v_measure_score(labels, estimator.labels_),
+#              metrics.adjusted_rand_score(labels, estimator.labels_),
+#              metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+#              metrics.silhouette_score(data, estimator.labels_,
+#                                       metric='euclidean'
+#                                       )))
+#
+# bench_k_means(KMeans(init='k-means++', n_clusters=n_digits),
+#               name="k-means++", data=norm_data)
+#
+# ## DIFFERENT DATASET
+# # create dataset
+# X, y = make_blobs(
+#    n_samples=150, n_features=2,
+#    centers=3, cluster_std=0.5,
+#    shuffle=True, random_state=0
+# )
+#
+# km = KMeans(
+#     n_clusters=3, init='random',
+#     max_iter=300,
+#     tol=1e-04
+# )
+# y_km = km.fit_predict(X)
+# print(y_km)
+# HAC = AgglomerativeClustering(n_clusters=3).fit_predict(X)
+# print(HAC)
