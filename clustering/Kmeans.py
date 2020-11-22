@@ -45,7 +45,7 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
             print("TOTAL_SSE",totalSSE_before,totalSSE_after, totalSSEDifference)
             iterations += 1
         self.clustersSSE = self._totalClusterSSEArray(X)
-        print(self._printClustersLength())
+        # print(self._printClustersLength())
         return self
 
     def _initCentroidDictAndCentroids(self,X):
@@ -59,10 +59,10 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
                 self.clustersCentroids.append(X[clusterIndx])
         else:
             indixes = np.random.choice(len(X), self.k)
-            for clusterIndx in range(0, indixes):
+            for clusterIndx in indixes:
                 self.clustersCentroids.append(X[clusterIndx])
 
-        print(self.clustersCentroids)
+        # print(self.clustersCentroids)
         return
 
     def _getClusterSSE(self, indexCluster,X):
