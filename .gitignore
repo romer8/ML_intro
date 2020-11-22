@@ -132,3 +132,14 @@ venv2/
 .idea
 *.xml
 *.iml
+
+/clustering/plots
+/decisiontree/plots
+/KNN/plots
+/perceptron/plots
+/backpropagation/plots
+/clustering/training
+/decisiontree/training
+/KNN/training
+/perceptron/training
+/backpropagation/training
