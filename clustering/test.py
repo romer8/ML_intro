@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import random
+from time import time
 import matplotlib.pyplot as plt
 ## change Path ##
 sys.path.append("/home/elkin/university/gradSchool/Fall2020/CS472/CS472")
@@ -12,8 +13,10 @@ from sklearn import preprocessing
 from sklearn.preprocessing import scale
 from sklearn.cluster import AgglomerativeClustering, KMeans
 import numpy as np
+from sklearn import metrics
 import matplotlib.cm as cm
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.datasets import make_blobs
 
 print("*******************PART 1************************************")
 print("*******************EVALUATION************************************")
@@ -327,3 +330,50 @@ print("*******************PART 3************************************")
 #                   "with n_clusters = %d" % n_clusters),
 #                  fontsize=14, fontweight='bold')
 #     plt.savefig(save_path)
+
+## METRICS TABLE ##
+arff_path_train = r"training/iris.arff"
+mat = arff.Arff(arff_path_train,label_count=0)
+raw_data = mat.data
+data = raw_data
+labels = data[:, -1]
+data = data[...,:-1]
+scaler = preprocessing.MinMaxScaler()
+scaler.fit(data)
+norm_data = scaler.transform(data)
+
+n_digits = len(np.unique(labels))
+def bench_k_means(estimator, name, data):
+    t0 = time()
+    estimator.fit(data)
+    print('%-9s\t%.2fs\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f'
+          % (name, (time() - t0), estimator.inertia_,
+             metrics.homogeneity_score(labels, estimator.labels_),
+             metrics.completeness_score(labels, estimator.labels_),
+             metrics.v_measure_score(labels, estimator.labels_),
+             metrics.adjusted_rand_score(labels, estimator.labels_),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+             metrics.silhouette_score(data, estimator.labels_,
+                                      metric='euclidean'
+                                      )))
+
+bench_k_means(KMeans(init='k-means++', n_clusters=n_digits),
+              name="k-means++", data=norm_data)
+
+## DIFFERENT DATASET
+# create dataset
+X, y = make_blobs(
+   n_samples=150, n_features=2,
+   centers=3, cluster_std=0.5,
+   shuffle=True, random_state=0
+)
+
+km = KMeans(
+    n_clusters=3, init='random',
+    max_iter=300,
+    tol=1e-04
+)
+y_km = km.fit_predict(X)
+print(y_km)
+HAC = AgglomerativeClustering(n_clusters=3).fit_predict(X)
+print(HAC)
